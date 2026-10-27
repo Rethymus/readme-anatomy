@@ -50,7 +50,7 @@ narrowest mode that covers the request, and say which mode you picked:
 
 | Mode | Trigger | Scope |
 |---|---|---|
-| **new** | No README, or a from-scratch rewrite was asked | Full Steps 1–7, scaffold from `assets/templates/` |
+| **new** | No README, or a from-scratch rewrite was asked | Full Steps 1–7; generate the shape with `python scripts/readme_scaffold.py --name X --type T --lang both`, then fill every placeholder |
 | **rewrite** | Existing README, user wants the method applied | Full Steps 1–7, claim-by-claim audit |
 | **small-edit** | A section, badge, link, or wording fix | Touch only the affected section; re-run gates on the whole file; skip the Four Questions except the one the edit touches (usually Q3) |
 | **audit-only** | "Check/audit my README" — no rewrites requested | No edits. Deliver the gate output + tier table as findings |

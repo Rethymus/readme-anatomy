@@ -71,8 +71,9 @@ copy the `readme-anatomy/` directory into your skills directory.
   audit-only / translate) so small edits don't inherit full-ceremony cost.
 - Keeps the repo's agent surfaces (AGENTS.md, llms.txt) consistent with the
   README instead of duplicating it.
-- Carries a before/after few-shot pair and copy-paste templates for header,
-  evidence table, and FAQ.
+- Scaffolds a gates-clean README skeleton from the four answers
+  (`scripts/readme_scaffold.py` — output passes the doctor by construction),
+  and carries a real before/after pair plus copy-paste templates.
 
 ## 5. How it works
 

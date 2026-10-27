@@ -80,6 +80,13 @@ def strip_code_fences(text: str) -> str:
     return "\n".join(out)
 
 
+def strip_inline_code(text: str) -> str:
+    """Blank out inline code spans (`...`), preserving positions.
+    Code identifiers (package/module names, paths) legitimately differ in
+    casing/separators from prose naming -- they are not drift."""
+    return re.sub(r"`[^`\n]+`", "''", text)
+
+
 def github_slug(heading: str, seen: Counter) -> str:
     """Approximate github-slugger: lowercase, drop punctuation (emoji go too),
     spaces -> hyphens, duplicates get -1/-2 suffixes."""
@@ -244,7 +251,8 @@ def gate_spelling(text: str, ctx: dict) -> tuple[str, list[str], list[str]]:
         name = first_h1.group(1).strip()
     pat = _name_pattern(name)
     allow_keys = {s.lower() for s in ctx.get("allow", set())} | {name.lower()}
-    counts: Counter = Counter(m.group(0) for m in pat.finditer(strip_code_fences(text)))
+    haystack = strip_inline_code(strip_code_fences(text))
+    counts: Counter = Counter(m.group(0) for m in pat.finditer(haystack))
     if not counts:
         return "skip", [f"no occurrence of project name {name!r} found"], []
     keys: dict[str, Counter] = {}
@@ -314,16 +322,17 @@ def gate_bilingual(text: str, ctx: dict) -> tuple[str, list[str], list[str]]:
                             f"(switch documents, not sections): {url}")
 
     if zh:
+        zh_name = Path(zh).name  # --zh may be absolute or relative; compare by name
         zh_path = base_dir / zh
         if not zh_path.exists():
             problems.append(f"--zh file not found: {zh}")
         else:
-            plain_to_zh = any(u.partition("#")[0] == zh for u in urls)
+            plain_to_zh = any(u.partition("#")[0] == zh_name for u in urls)
             if not plain_to_zh:
-                problems.append(f"no switch line: {self_name} never links {zh}")
+                problems.append(f"no switch line: {self_name} never links {zh_name}")
             zh_links = collect_links(zh_path.read_text(encoding="utf-8"))
             if not any(u.partition("#")[0] == self_name for u in zh_links):
-                problems.append(f"switch line not bidirectional: {zh} never links {self_name}")
+                problems.append(f"switch line not bidirectional: {zh_name} never links {self_name}")
     else:
         for sibling in base_dir.glob("README*.md"):
             if sibling.name != self_name and not any(
@@ -440,6 +449,12 @@ def selftest() -> int:
     cases.append(("3", "must-not-fire: case-only variants are one form", "pass",
                   gate_spelling, "# glasswing\nGlasswing appears here too.\n",
                   {"name": "glasswing", "allow": set()}))
+    cases.append(("3", "must-not-fire: prose display name + inline-code identifiers",
+                  "pass", gate_spelling,
+                  "# Agent Comparability\nAgent Comparability adjudicates records; "
+                  "the module `agent_comparability` and package `agent-comparability` "
+                  "are code surfaces.\n",
+                  {"name": "agent-comparability", "allow": set()}))
     cases.append(("3", "must-not-fire: whitelist absorbs variant", "pass",
                   gate_spelling, "# lumina-cli\nLumina CLI in prose.\n",
                   {"name": "lumina-cli", "allow": {"Lumina CLI"}}))
@@ -516,6 +531,11 @@ def selftest() -> int:
                 ("5", "must-fire: stale zh reference (file missing)", "fail",
                  gate_bilingual, "[zh](README.zh-CN.md#quick-start)\n",
                  {"base_dir": tmp3, "self_name": "README.md"}),
+                ("5", "must-not-fire: --zh given as absolute path", "pass",
+                 gate_bilingual,
+                 (tmp / "README.md").read_text(encoding="utf-8"),
+                 {"base_dir": tmp, "self_name": "README.md",
+                  "zh": str((tmp / "README.zh-CN.md").resolve())}),
             ]
 
         cases += _link_file_cases()
