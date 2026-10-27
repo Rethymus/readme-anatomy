@@ -29,10 +29,11 @@ All URLs verified reachable on **2026-10-27**.
 
 - No third-party prose is copied into this skill. Anchors cite; they do not
   import. Any future quotation from an external work must carry its license
-  note here **before** merging (the standing lesson from glassspring's
+  note here **before** merging (the standing lesson from glasswing's
   unresolved third-party rights review).
-- The `assets/before.md` / `assets/after.md` pair is a fictional composite
-  (project "lumina-cli"), so no real project's text is reproduced.
+- The `assets/before.md` / `assets/after.md` pair is this method's origin
+  project's own rewrite pair, desensitized to `glasswing` (provenance and
+  rights note in `evals/ledger.md`); no third-party text is reproduced.
 - This skill's own content: MIT, see repository `LICENSE`.
 
 ## Maintenance

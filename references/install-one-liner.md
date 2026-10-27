@@ -11,7 +11,7 @@ nothing.
 **One-liner for your agent:**
 
 ```text
-Install lumina-cli for me: https://raw.githubusercontent.com/example/lumina/v2.3.0/install.md
+Install glasswing for me: https://raw.githubusercontent.com/example/glasswing/v2.3.0/install.md
 ```
 ```
 

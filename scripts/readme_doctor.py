@@ -12,9 +12,11 @@ Gates
                  resolve); http(s) links are syntax-checked offline and
                  liveness-checked with --live using GET -- raw.githubusercontent
                  and similar endpoints reject HEAD, which causes false 404s
-  3 spelling     exactly one surface form of the project name (case and
-                 separator variants count: "Lumina CLI" vs "lumina-cli" vs
-                 "LuminaCLI"); extra surfaces can be whitelisted with --allow
+  3 spelling     one canonical surface form of the project name; case-only
+                 variants count as one form (sentence-initial capitalization
+                 is orthography, not drift), while separator variants are
+                 identity drift ("Lumina CLI" vs "lumina-cli" vs "LuminaCLI");
+                 unlisted variants can be whitelisted with --allow
   4 badges       <= 4 badges; every badge href is meaningful (not "#"/empty);
                  shields.io badges use style=flat-square
   5 bilingual    language switch line is bidirectional; zero stale
@@ -198,18 +200,27 @@ def gate_spelling(text: str, ctx: dict) -> tuple[str, list[str], list[str]]:
             return "skip", ["no --name given and no H1 to infer from"], []
         name = first_h1.group(1).strip()
     pat = _name_pattern(name)
-    surfaces = Counter(m.group(0) for m in pat.finditer(strip_code_fences(text)))
-    surfaces = {s: n for s, n in surfaces.items() if s not in ctx.get("allow", set())}
-    if not surfaces:
+    allow_keys = {s.lower() for s in ctx.get("allow", set())} | {name.lower()}
+    counts: Counter = Counter(m.group(0) for m in pat.finditer(strip_code_fences(text)))
+    if not counts:
         return "skip", [f"no occurrence of project name {name!r} found"], []
-    if len(surfaces) > 1:
-        canonical = ctx.get("name") or max(
-            surfaces.items(), key=lambda kv: (kv[1], -len(kv[0])))[0]
+    keys: dict[str, Counter] = {}
+    for raw, n in counts.items():
+        k = raw.lower()  # case-only variants are one form; separators are identity
+        if k in allow_keys:
+            continue
+        keys.setdefault(k, Counter())[raw] += n
+    if not keys:
+        return "pass", [f"single surface form (modulo case): {name.lower()!r}"], []
+    if len(keys) > 1:
+        canonical = name.lower() if name.lower() in keys else max(
+            keys, key=lambda k: sum(keys[k].values()))
         detail = ["project name appears in multiple surface forms; pick one "
                   f"(suggested canonical: {canonical!r}):"]
-        detail += [f"  {n}x {s!r}" for s, n in sorted(surfaces.items(), key=lambda kv: -kv[1])]
+        for k, c in sorted(keys.items(), key=lambda kv: -sum(kv[1].values())):
+            detail.append("  " + ", ".join(f"{n}x {raw!r}" for raw, n in c.most_common()))
         return "fail", detail, []
-    return "pass", [f"single surface form: {next(iter(surfaces))!r}"], []
+    return "pass", [f"single surface form (modulo case): {next(iter(keys))!r}"], []
 
 
 def gate_badges(text: str, ctx: dict) -> tuple[str, list[str], list[str]]:
@@ -382,6 +393,9 @@ def selftest() -> int:
                   gate_spelling, "# Lumina CLI\nUse lumina-cli or LuminaCLI.\n", {"name": "lumina-cli", "allow": set()}))
     cases.append(("3", "must-not-fire: single surface", "pass",
                   gate_spelling, "# lumina-cli\nlumina-cli rocks.\n", {"name": "lumina-cli", "allow": set()}))
+    cases.append(("3", "must-not-fire: case-only variants are one form", "pass",
+                  gate_spelling, "# glasswing\nGlasswing appears here too.\n",
+                  {"name": "glasswing", "allow": set()}))
     cases.append(("3", "must-not-fire: whitelist absorbs variant", "pass",
                   gate_spelling, "# lumina-cli\nLumina CLI in prose.\n",
                   {"name": "lumina-cli", "allow": {"Lumina CLI"}}))

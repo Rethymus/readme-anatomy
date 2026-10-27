@@ -23,7 +23,7 @@ boundaries section: every boundary generates a "why not X?" question.
 
 Anti-patterns (each of these means the entry is decoration):
 
-- Invented questions no reader would ask ("Is lumina-cli amazing?").
+- Invented questions no reader would ask ("Is this tool amazing?").
 - Answers that restate the question ("Is it fast? It's very fast").
 - More than eight entries — a longer FAQ is a boundaries section that didn't
   get written.

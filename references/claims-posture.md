@@ -28,7 +28,7 @@ Rules:
 
 Before (tier violation — asserts more than the license proves):
 
-> lumina is 100% open source under MIT.
+> glasswing is 100% open source under MIT.
 
 The repo's code carries MIT; vendored assets and the `docs/` tree carry other
 licenses. The sentence is falsifiable by a reader with five minutes and a
@@ -48,7 +48,7 @@ One device, one job. Mixing them is how docs start lying:
 | Device | Carries exactly | Example |
 |---|---|---|
 | `[!IMPORTANT]` | Boundaries; necessary/sufficient conditions | "Green gates are necessary, not sufficient, for release." |
-| `[!WARNING]` | Never-do; channel exclusivity (anti-impersonation) | "We will never DM you asking for keys. Release channels are exactly: GitHub Releases, npm `lumina`." |
+| `[!WARNING]` | Never-do; channel exclusivity (anti-impersonation) | "We will never DM you asking for keys. Release channels are exactly: GitHub Releases, npm `glasswing`." |
 | `[!NOTE]` | Translation drift policy; source of truth | "English `README.md` is the source of truth; the Chinese translation may lag." |
 
 - `[!TIP]` and `[!CAUTION]` are legal GitHub types but this method reserves

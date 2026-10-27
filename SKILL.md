@@ -3,7 +3,7 @@ name: readme-anatomy
 description: Rewrite and audit project READMEs with a measurement-first method — centered header anatomy, tiered claims, bilingual drift policy, agent-fetchable install one-liners, and machine-checkable gates. Use whenever the user asks to write, rework, translate, or audit a README, or says the README "looks AI-generated", "is sloppy", or needs badges, admonitions, a table of contents, or an install command.
 ---
 
-# README Anatomy — measurement-first README craft
+# readme-anatomy — measurement-first README craft
 
 Treat a README the way an engineer treats code: structure first, every claim
 classified by how it can be verified, and a machine gate that fails loudly.

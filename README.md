@@ -93,7 +93,7 @@ Rules cite anchors; anchors never carry the rules.
 | Claim | Where | Notes |
 |---|---|---|
 | Six gates with dual-anchor selftest | `scripts/readme_doctor.py`, `--selftest` | each gate ships a must-fire and a must-not-fire fixture |
-| Before/after few-shot pair | `assets/before.md`, `assets/after.md` | fictional project; before fails all six gates by design |
+| Real rewrite pair, desensitized | `assets/before.md`, `assets/after.md` | origin project's pre-rework snapshot vs the rework (header/TOC/FAQ/one-liner); provenance in `evals/ledger.md` |
 | Rules carry source anchors | `references/research.md` | all URLs verified 2026-10-27 |
 | Method grounded in prior art | `references/research.md` (literature table) | Prana 2018; README-popularity study 2022; Liu 2023 |
 

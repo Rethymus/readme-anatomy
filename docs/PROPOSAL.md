@@ -2,7 +2,9 @@
 
 > 状态：提案（未立项）
 > 日期：2026-10-27
-> 来源：对 glassspring README 重写全过程的复盘 + 竞品/文献调研（全部链接已验证可达）
+> 来源：对 glasspring README 重写全过程的复盘 + 竞品/文献调研（全部链接已验证）
+
+> **勘误（2026-10-27 交接执行时补记）**：项目 canonical 名为 **`glasspring`**（glass⊕spring 共享中缀 s；GitHub 仓库 `Rethymus/glasspring`）。本文写作 `glassspring` 系拼写漂移——恰是交接硬纪律 1 要防的事故。README 重写提交 = 远程 main 尖端 `c2be2f7`（2026-10-27 22:39，PR #4），before 样本 = `c2be2f7~1:README.zh-CN.md`；该前后对已脱敏（glasspring→glasswing、Rethymus→Example）存入 `assets/before.md`、`assets/after.md`。详见 `evals/ledger.md`。
 
 ---
 

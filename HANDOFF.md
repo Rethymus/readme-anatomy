@@ -1,5 +1,7 @@
 # 交接：readme-anatomy 项目启动（M0）
 
+> **状态（2026-10-27 深夜）**：M0 与 M1 已由交接执行会话完成并提交（selftest 22/22；门禁对本仓 README 全绿；真实前后对已入 assets/；见 `evals/ledger.md`）。本文其余内容保留原貌，路径与拼写已就地修正：canonical 名为 **`glasspring`**（本地目录名 `glassspring-remediation` 的双 s 属目录命名残迹，路径真实可用）。
+
 ## 你是谁、在哪
 
 你是 `readme-anatomy` 仓库的第一个开发 agent。目录刚建、完全空白（未 git init）。
@@ -9,9 +11,9 @@
 ## 必读材料（按序，读完列出你的理解与疑问再开工）
 
 1. **`docs/PROPOSAL.md`**（source of truth）：三层方法论（L1 结构骨架 / L2 语义契约 / L3 验证门禁）、仓库结构、M0–M4 路线图、命名依据、竞品与文献（链接已验证）
-2. **`F:\ZCodeData\frontend\.agents\skills\glasspring\SKILL.md`**：工程纪律活样本——四问路由、单任务 ≤3 个 reference 的上下文预算、门禁文化、判断句措辞
-3. **`F:\ZCodeData\frontend\.agents\skills\glassspring\scripts\doctor.py`** 的 `--selftest` 实现：双锚点模式（命中锚点 + 防误报锚点），M1 的 readme_doctor.py 要复刻这个模式
-4. **方法论的实际产物**：https://github.com/Rethymus/glasspring 的 `README.md` 与 `README.zh-CN.md`（M3 递归自证的目标长相）；before 样本 = clone 后 `git show c2be2f7~1:README.zh-CN.md`（重写前的旧版）
+2. **`F:\ZCodeData\glasspring-remediation\skills\glasspring\SKILL.md`**：工程纪律活样本——四问路由、单任务 ≤3 个 reference 的上下文预算、门禁文化、判断句措辞
+3. **`F:\ZCodeData\glasspring-remediation\skills\glasspring\scripts\doctor.py`** 的 `--selftest` 实现：双锚点模式（命中锚点 + 防误报锚点），M1 的 readme_doctor.py 要复刻这个模式
+4. **方法论的实际产物**：https://github.com/Rethymus/glasspring 的 `README.md` 与 `README.zh-CN.md`（M3 递归自证的目标长相）；before 样本 = `git fetch origin` 后 `git show c2be2f7~1:README.zh-CN.md`（重写前的旧版；c2be2f7 = 远程 main 尖端，即重写提交本身，本地基线不含）
 
 ## M0 任务清单（本次全部完成）
 
@@ -25,10 +27,10 @@
 
 ## 硬纪律（前一个项目实战踩过的坑，逐条照做）
 
-1. **拼写漂移**：生成文本里项目名会随机出现变体（glassspring 项目发生过 12 处、含死链 URL 的事故）。所有文件写完后必须用**程序构造字符串**（如 `'readme' + '-anatomy'`）做比对与规范化，禁止肉眼核对
+1. **拼写漂移**：生成文本里项目名会随机出现变体（glasspring 项目发生过 12 处、含死链 URL 的事故）。所有文件写完后必须用**程序构造字符串**（如 `'readme' + '-anatomy'`）做比对与规范化，禁止肉眼核对
 2. **链接活性验证一律用 GET**：raw.githubusercontent.com 对 HEAD 请求返回 404 假阳性
 3. **GitHub 锚点 slug 规则**：emoji 开头的标题锚点带首连字符（`#-为什么需要`）；标点（？！：，&/）删除；空格→连字符；`&` 两侧空格产生双连字符——TOC 锚点必须程序化校验，不许手写即信
-4. **主张三档分级**：已验证主张（附证据路径）/ 开发档案主张（降级为代码字体 + 注记）/ 营销话术（禁用）。外部材料引用一律注明出处与许可——权利审查前置，这是 glassspring 发布流程的教训
+4. **主张三档分级**：已验证主张（附证据路径）/ 开发档案主张（降级为代码字体 + 注记）/ 营销话术（禁用）。外部材料引用一律注明出处与许可——权利审查前置，这是 glasspring 发布流程的教训
 5. **发布纪律**：不直推 main，一律 PR + CI 绿后合并；**不许为了让门禁通过而放宽规则阈值**（PR 红线）
 6. 本阶段**不要**创建 GitHub 远程仓库——发布是 M3 的事，需用户授权
 
