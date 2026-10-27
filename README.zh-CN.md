@@ -48,19 +48,22 @@ LLM 辅助的 README 生成解决了空白页问题，却制造了真实性问�
 
 ## 3. 安装
 
-> [!NOTE]
-> v0 脚手架（M0）。agent 可抓取的安装一句话将在首次公开发布（M3）时启用
-> ——指向未发布 URL 的一句话会通不过它自己的自测。
+**给你的 agent 的一句话：**
 
-当前请从检出版使用：
+```text
+Install readme-anatomy for me: https://raw.githubusercontent.com/Rethymus/readme-anatomy/v0.2.0/INSTALL.md
+```
+
+优先用一句话。从检出版使用：
 
 ```bash
-git clone <this-repo-url> && cd readme-anatomy
+git clone https://github.com/Rethymus/readme-anatomy.git && cd readme-anatomy
 python scripts/readme_doctor.py --selftest   # 预期：全绿
 ```
 
 然后让 agent 读取 `SKILL.md`（见你的客户端 skill 加载文档），或把
-`readme-anatomy/` 目录复制进你的 skills 目录。
+`readme-anatomy/` 目录复制进你的 skills 目录。完整说明见
+[INSTALL.md](INSTALL.md)。
 
 ## 4. 能力
 

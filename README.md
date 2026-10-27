@@ -43,20 +43,22 @@ so any agent can run the method, not just admire it.
 
 ## 3. Install
 
-> [!NOTE]
-> v0 scaffold (M0). The agent-fetchable one-liner activates on first public
-> release (M3) — a one-liner pointing at an unpublished URL would fail its own
-> self-test.
+**One-liner for your agent:**
 
-Today, use it from a checkout:
+```text
+Install readme-anatomy for me: https://raw.githubusercontent.com/Rethymus/readme-anatomy/v0.2.0/INSTALL.md
+```
+
+Prefer the one-liner. From a checkout:
 
 ```bash
-git clone <this-repo-url> && cd readme-anatomy
+git clone https://github.com/Rethymus/readme-anatomy.git && cd readme-anatomy
 python scripts/readme_doctor.py --selftest   # expect: all green
 ```
 
 Then point your agent at `SKILL.md` (see your client's skill-loading docs), or
-copy the `readme-anatomy/` directory into your skills directory.
+copy the `readme-anatomy/` directory into your skills directory. Full details:
+[INSTALL.md](INSTALL.md).
 
 ## 4. Capabilities
 
