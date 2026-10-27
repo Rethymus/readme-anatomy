@@ -4,6 +4,8 @@
 
 Can an agent prove a README tells the truth, instead of merely making it look convincing?
 
+[![readme gates](https://github.com/Rethymus/readme-anatomy/actions/workflows/readme-gates.yml/badge.svg?style=flat-square)](https://github.com/Rethymus/readme-anatomy/actions/workflows/readme-gates.yml)
+
 30 seconds: [Install](#3-install) · [Contrast](#2-30-second-contrast) · [Capabilities](#4-capabilities) · [Evidence](#7-evidence)
 
 **English** | [简体中文](README.zh-CN.md)
@@ -46,7 +48,7 @@ so any agent can run the method, not just admire it.
 **One-liner for your agent:**
 
 ```text
-Install readme-anatomy for me: https://raw.githubusercontent.com/Rethymus/readme-anatomy/v0.2.0/INSTALL.md
+Install readme-anatomy for me: https://raw.githubusercontent.com/Rethymus/readme-anatomy/v0.3.0/INSTALL.md
 ```
 
 Prefer the one-liner. From a checkout:

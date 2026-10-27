@@ -23,7 +23,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from readme_doctor import _name_pattern  # share the variant detector
+from readme_doctor import _name_pattern, CODE_SPAN_SPLIT  # share the detector
 
 
 def main(argv=None) -> int:
@@ -44,12 +44,18 @@ def main(argv=None) -> int:
 
     def repl(m: re.Match) -> str:
         nonlocal changes
-        if m.group(0) in keep:
+        if m.group(0) in keep or m.group(0).lower() in {k.lower() for k in keep}:
             return m.group(0)
         changes += 1
         return args.name
 
-    new_text = pat.sub(repl, text)
+    # inline code spans are identifiers, not naming -- never rewritten
+    segments = CODE_SPAN_SPLIT.split(text)
+    fixed = [
+        pat.sub(repl, s) if not (s.startswith("`") and s.endswith("`")) else s
+        for s in segments
+    ]
+    new_text = "".join(fixed)
 
     if changes == 0:
         print(f"spelling_norm: already canonical ({args.name!r}); nothing to do")

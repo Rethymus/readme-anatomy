@@ -1,0 +1,27 @@
+name: decay-watch
+
+# Weekly automated probe of references/research.md's decay watchlist (items 5-6):
+# badge-host URL shapes and raw-URL GET semantics. Dead links FAIL (red light);
+# unreachable-network cases WARN only, so the job fails on real rot, not on
+# transient network weather. The watchlist's procedural items (ecosystem
+# re-scan, spec revalidation, model-context basis) stay manual by design.
+
+on:
+  schedule:
+    - cron: "17 4 * * 1" # weekly, Monday 04:17 UTC
+  workflow_dispatch: {}
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: selftest (dual-anchor fixtures)
+        run: python scripts/readme_doctor.py --selftest
+      - name: gates with live GET probes (own bilingual pair)
+        run: |
+          python scripts/readme_doctor.py README.md --name readme-anatomy --zh README.zh-CN.md --live
+          python scripts/readme_doctor.py README.zh-CN.md --name readme-anatomy --live

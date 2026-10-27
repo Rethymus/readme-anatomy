@@ -4,7 +4,7 @@ description: Rewrite and audit project READMEs with a measurement-first method â
 license: MIT
 compatibility: scripts/ need Python 3.10+ (stdlib only); gates run offline by default
 metadata:
-  version: "0.2"
+  version: "0.3"
   method-origin: "distilled from the glasspring README rework (2026-10-27)"
 ---
 

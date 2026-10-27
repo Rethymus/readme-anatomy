@@ -31,12 +31,14 @@ Gates
 Usage
   python scripts/readme_doctor.py README.md [--name canonical-name]
                                         [--zh README.zh-CN.md] [--live]
-                                        [--allow SURFACE] ... [--json]
+                                        [--allow SURFACE] ... [--json] [--fix]
   python scripts/readme_doctor.py --selftest
 
 --json emits a machine-readable report (one JSON object) to stdout -- for CI
-jobs and agent loops; exit code is unchanged. Stdlib only; offline by default
-so runs are reproducible in CI.
+jobs and agent loops; exit code is unchanged. --fix repairs only the mechanical
+defect classes in place (badge flat-square style, drifted prose name surfaces
+-- never inline code); everything else is reported for judgment. Stdlib only;
+offline by default so runs are reproducible in CI.
 
 Known limitations (v0.2): shortcut reference links ([label] without brackets)
 are ambiguous and are not collected; setext h2 underlines are treated as
@@ -242,6 +244,58 @@ def _name_pattern(name: str) -> re.Pattern:
     return re.compile(rf"(?<![A-Za-z0-9]){body}(?![A-Za-z0-9])", re.IGNORECASE)
 
 
+CODE_SPAN_SPLIT = re.compile(r"(`[^`\n]+`)")
+
+
+def fix_name_surfaces(text: str, name: str, allow: set[str] | None = None) -> tuple[str, int]:
+    """Repair gate-3 FAIL drift: rewrite non-canonical PROSE surface forms to
+    the canonical name. Fires only when prose carries more than one surface
+    key (a single display surface is orthography, not drift) and never
+    touches inline code spans (identifiers are code, not naming)."""
+    allow = allow or set()
+    segments = CODE_SPAN_SPLIT.split(text)
+    prose = "".join(s for s in segments if not (s.startswith("`") and s.endswith("`")))
+    pat = _name_pattern(name)
+    allow_keys = {s.lower() for s in allow} | {name.lower()}
+    keys = {m.group(0).lower() for m in pat.finditer(prose)} - allow_keys
+    if len(keys) <= 1:
+        return text, 0
+    changes = 0
+
+    def repl(m: re.Match) -> str:
+        nonlocal changes
+        if m.group(0).lower() in allow_keys:
+            return m.group(0)
+        changes += 1
+        return name
+
+    fixed_segments = [
+        pat.sub(repl, s) if not (s.startswith("`") and s.endswith("`")) else s
+        for s in segments
+    ]
+    return "".join(fixed_segments), changes
+
+
+def fix_badge_styles(text: str) -> tuple[str, int]:
+    """Append style=flat-square to shields.io badge image URLs missing it
+    (gate 4's WARN class). Only flat-square is enforced; logos/labels are
+    the author's business. Handles bare images and linked badges without
+    disturbing the surrounding brackets."""
+    changes = 0
+    pat = re.compile(r"(!?)\[([^\]]*)\]\((https://img\.shields\.io/[^)]+)\)")
+
+    def repl(m: re.Match) -> str:
+        nonlocal changes
+        url = m.group(3)
+        if "style=flat-square" in url:
+            return m.group(0)
+        changes += 1
+        styled = url + ("&" if "?" in url else "?") + "style=flat-square"
+        return f"{m.group(1)}[{m.group(2)}]({styled})"
+
+    return pat.sub(repl, text), changes
+
+
 def gate_spelling(text: str, ctx: dict) -> tuple[str, list[str], list[str]]:
     name = ctx.get("name")
     if not name:
@@ -376,6 +430,22 @@ GATES = [
 
 def run_doctor(readme: Path, args) -> int:
     text = readme.read_text(encoding="utf-8")
+    fixes: list[str] = []
+    if args.fix:
+        text, n_badges = fix_badge_styles(text)
+        if n_badges:
+            fixes.append(f"{n_badges} badge URL(s) -> style=flat-square")
+        if args.name:
+            text, n_names = fix_name_surfaces(
+                text, args.name, set(args.allow or []))
+            if n_names:
+                fixes.append(f"{n_names} drifted name occurrence(s) -> {args.name!r}")
+        if fixes:
+            readme.write_text(text, encoding="utf-8")
+            for f in fixes:
+                print(f"  fixed: {f}")
+        else:
+            print("  fix: nothing mechanical to repair")
     ctx = {
         "base_dir": readme.parent,
         "self_name": readme.name,
@@ -386,7 +456,7 @@ def run_doctor(readme: Path, args) -> int:
     }
     fails = 0
     report = {"file": str(readme), "name": args.name, "live": bool(args.live),
-              "gates": []}
+              "fixes": fixes, "gates": []}
     print(f"readme_doctor: {readme}"
           + ("  [live]" if args.live else "  [offline]"))
     for i, (name, desc, fn) in enumerate(GATES, 1):
@@ -559,7 +629,43 @@ def selftest() -> int:
             failed += 1
         print(f"  [{'PASS' if ok else 'FAIL'}] gate 1 selftest: broken anchor "
               f"carries nearest-slug suggestion (got {suggest_probe})")
-    total = len(cases) + 2
+
+        def _fix_badge_probe():
+            linked = "[![a](https://img.shields.io/badge/a-1?logo=x)](https://x)"
+            bare = "![b](https://img.shields.io/badge/b-2)"
+            new, n = fix_badge_styles(linked + "\n" + bare)
+            ok = (n == 2 and "[[!" not in new
+                  and "a-1?logo=x&style=flat-square" in new
+                  and f"{bare.split('(')[0]}(https://img.shields.io/badge/b-2?style=flat-square)" in new
+                  and linked.split("](")[1].split("?")[0] in new)
+            return f"fixed-{n}" if ok else "other"
+
+        def _fix_name_probe():
+            drift = ("# lumina-cli\nLumina CLI and LuminaCLI differ; "
+                     "keep `agent_comparability` untouched.\n")
+            new, n = fix_name_surfaces(drift, "lumina-cli")
+            ok = (n == 2 and "Lumina CLI" not in new and "LuminaCLI" not in new
+                  and "`agent_comparability`" in new)
+            return f"fixed-{n}" if ok else "other"
+
+        def _fix_name_noop_probe():
+            single = ("# Agent Comparability\nAgent Comparability is fine; "
+                      "`agent_comparability` is code.\n")
+            new, n = fix_name_surfaces(single, "agent-comparability")
+            ok = n == 0 and new == single
+            return "noop" if ok else "other"
+
+        for label, probe, expect in [
+                ("badge style autofix handles linked + bare without bracket damage",
+                 _fix_badge_probe, "fixed-2"),
+                ("name drift fixer rewrites prose, spares inline code", _fix_name_probe, "fixed-2"),
+                ("name fixer no-ops on a single display surface", _fix_name_noop_probe, "noop")]:
+            got = probe()
+            ok = got == expect
+            if not ok:
+                failed += 1
+            print(f"  [{'PASS' if ok else 'FAIL'}] --fix selftest: {label} (got {got})")
+    total = len(cases) + 5
     print(f"selftest: {total - failed}/{total} green")
     return 1 if failed else 0
 
@@ -576,6 +682,9 @@ def main(argv=None) -> int:
                     help="whitelist an extra surface form of the name (repeatable)")
     ap.add_argument("--json", action="store_true",
                     help="also print a machine-readable JSON report (for CI/agent loops)")
+    ap.add_argument("--fix", action="store_true",
+                    help="repair mechanical defect classes in place (badge style, "
+                         "drifted prose name surfaces); judgment repairs stay manual")
     ap.add_argument("--selftest", action="store_true",
                     help="run the built-in dual-anchor fixtures and exit")
     args = ap.parse_args(argv)

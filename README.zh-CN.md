@@ -10,6 +10,8 @@
 
 agent 能否证明一份 README 说的是真话，而不只是把它写得看起来可信？
 
+[![readme gates](https://github.com/Rethymus/readme-anatomy/actions/workflows/readme-gates.yml/badge.svg?style=flat-square)](https://github.com/Rethymus/readme-anatomy/actions/workflows/readme-gates.yml)
+
 30 秒：[安装](#3-安装) · [对照](#2-30-秒对照) · [能力](#4-能力) · [证据](#7-证据)
 
 [English](README.md) | **简体中文**
@@ -51,7 +53,7 @@ LLM 辅助的 README 生成解决了空白页问题，却制造了真实性问�
 **给你的 agent 的一句话：**
 
 ```text
-Install readme-anatomy for me: https://raw.githubusercontent.com/Rethymus/readme-anatomy/v0.2.0/INSTALL.md
+Install readme-anatomy for me: https://raw.githubusercontent.com/Rethymus/readme-anatomy/v0.3.0/INSTALL.md
 ```
 
 优先用一句话。从检出版使用：

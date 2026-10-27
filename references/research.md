@@ -54,7 +54,10 @@ that is this ledger's first maintenance item.
 ## Decay watchlist — what rots first, and how to notice
 
 If this skill stops working in a year, it will most likely be one of these,
-in this order. Each entry names its cheap detection probe.
+in this order. Each entry names its cheap detection probe. Items 5 and 6 run
+automatically every week via `.github/workflows/decay-watch.yml` (live GET
+probes against this repo's own bilingual README pair); the rest stay
+procedural on purpose.
 
 1. **GitHub slug & admonition rendering changes** (highest traffic, most
    silent). Our slugger approximates github-slugger; GitHub may change emoji
