@@ -1,17 +1,20 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-readme_doctor.py -- six machine gates for README craft.
+readme_doctor.py -- six machine gates for README craft. (v0.2)
 
 Gates
   1 anchors      internal anchor links resolve under GitHub slug rules
                  (emoji-prefixed headings produce a LEADING HYPHEN:
                  "## Install" -> #install, "## 🚀 Install" -> #-install;
-                 duplicate headings get -1, -2 suffixes)
+                 duplicate headings get -1, -2 suffixes; setext headings
+                 count too). Broken anchors get nearest-match suggestions.
   2 links        relative targets exist on disk (and cross-file fragments
-                 resolve); http(s) links are syntax-checked offline and
-                 liveness-checked with --live using GET -- raw.githubusercontent
-                 and similar endpoints reject HEAD, which causes false 404s
+                 resolve); reference-style links ([text][label]) resolve via
+                 their definitions, an undefined label is a defect; http(s)
+                 links are syntax-checked offline and liveness-checked with
+                 --live using GET -- raw.githubusercontent and similar
+                 endpoints reject HEAD, which causes false 404s
   3 spelling     one canonical surface form of the project name; case-only
                  variants count as one form (sentence-initial capitalization
                  is orthography, not drift), while separator variants are
@@ -28,20 +31,24 @@ Gates
 Usage
   python scripts/readme_doctor.py README.md [--name canonical-name]
                                         [--zh README.zh-CN.md] [--live]
-                                        [--allow SURFACE] ...
+                                        [--allow SURFACE] ... [--json]
   python scripts/readme_doctor.py --selftest
 
-Exit code 0 = no FAIL. WARN never fails the run. Stdlib only; offline by
-default so runs are reproducible in CI.
+--json emits a machine-readable report (one JSON object) to stdout -- for CI
+jobs and agent loops; exit code is unchanged. Stdlib only; offline by default
+so runs are reproducible in CI.
 
-Known limitations (v0.1): reference-style links ([text][ref]) are not
-collected; setext headings (=== underline) are not parsed; admonition
-semantics (which box for which job) are audited by the agent against
-references/claims-posture.md, not by this script.
+Known limitations (v0.2): shortcut reference links ([label] without brackets)
+are ambiguous and are not collected; setext h2 underlines are treated as
+headings wherever a non-blank text line directly precedes a --- rule, matching
+GitHub's parse; admonition semantics (which box for which job) are audited by
+the agent against references/claims-posture.md, not by this script.
 """
 from __future__ import annotations
 
 import argparse
+import difflib
+import json
 import re
 import sys
 import tempfile
@@ -86,30 +93,61 @@ def github_slug(heading: str, seen: Counter) -> str:
 
 
 def collect_headings(text: str) -> list[str]:
+    """ATX headings plus setext headings (text line directly followed by a
+    === or --- underline), both outside code fences."""
     seen: Counter = Counter()
-    slugs = []
-    for line in strip_code_fences(text).splitlines():
+    slugs: list[str] = []
+    lines = strip_code_fences(text).splitlines()
+    for i, line in enumerate(lines):
         m = re.match(r"^(#{1,6})\s+(.+?)\s*#*\s*$", line)
         if m:
             slugs.append(github_slug(m.group(2), seen))
+            continue
+        if not line.strip():
+            continue
+        nxt = lines[i + 1].strip() if i + 1 < len(lines) else ""
+        if re.fullmatch(r"={2,}", nxt) or re.fullmatch(r"-{2,}", nxt):
+            slugs.append(github_slug(line, seen))
     return slugs
 
 
 LINK_RE = re.compile(r"(?<!\!)\[[^\]]*\]\(([^)\s]+)(?:\s+\"[^\"]*\")?\)")
 BADGE_RE = re.compile(r"\[!\[([^\]]*)\]\(([^)]+)\)\]\(([^)]+)\)")
 IMG_RE = re.compile(r"!\[([^\]]*)\]\(([^)]+)\)")
+REF_LINK_RE = re.compile(r"\[([^\]]*)\]\[([^\]]*)\]")
+LINK_DEF_RE = re.compile(
+    r"^\s{0,3}\[([^\]]+)\]:\s*<?([^\s>]+)>?(?:\s+[\"'(](?:.+?)[\"')])?\s*$")
 # a badge line: a line consisting solely of bare images and/or linked images
 BADGE_LINE_RE = re.compile(
     r"^\s{0,3}(?:\s*(?:\[!\[[^\]]*\]\([^)]+\)\]\([^)]+\)|!\[[^\]]*\]\([^)]+\)))+\s*$")
 BADGE_HOSTS = ("shields.io", "badgen.net", "badgecdn.com", "badge.fury.io")
 
 
+def collect_link_info(text: str) -> tuple[list[str], list[str]]:
+    """All link targets (inline plus reference-style resolved through their
+    definitions) and the list of reference links whose label is undefined."""
+    stripped = BADGE_RE.sub("[badge]", strip_code_fences(text))
+    urls = [m.group(1) for m in LINK_RE.finditer(stripped)]
+    defs: dict[str, str] = {}
+    for line in stripped.splitlines():
+        m = LINK_DEF_RE.match(line)
+        if m:
+            defs.setdefault(m.group(1).strip().lower(), m.group(2))
+    undefined: list[str] = []
+    for m in REF_LINK_RE.finditer(stripped):
+        label = (m.group(2) or m.group(1)).strip().lower()
+        if not label and not m.group(1).strip():
+            undefined.append(m.group(0))
+        elif label in defs:
+            urls.append(defs[label])
+        else:
+            undefined.append(m.group(0))
+    return urls, undefined
+
+
 def collect_links(text: str) -> list[str]:
-    """Normal markdown links (anchors included). Linked-badge constructs are
-    masked first so their inner image URL is not misread as a link target."""
-    stripped = strip_code_fences(text)
-    masked = BADGE_RE.sub("[badge]", stripped)
-    return [m.group(1) for m in LINK_RE.finditer(masked)]
+    """Link targets only (inline and resolved reference-style)."""
+    return collect_link_info(text)[0]
 
 
 def collect_images(text: str) -> list[str]:
@@ -129,7 +167,9 @@ def gate_anchors(text: str, ctx: dict) -> tuple[str, list[str], list[str]]:
             continue
         frag = url[1:]
         if frag and frag not in slugs:
-            problems.append(f"broken anchor: #{frag}")
+            near = difflib.get_close_matches(frag, sorted(slugs), n=2, cutoff=0.6)
+            hint = f" (did you mean: #{near[0]}?)" if near else ""
+            problems.append(f"broken anchor: #{frag}{hint}")
     return ("fail" if problems else "pass"), problems, []
 
 
@@ -140,7 +180,7 @@ def _check_http(url: str, live: bool) -> tuple[list[str], list[str]]:
         return ([f"malformed http(s) link: {url}"], [])
     if live:
         req = urllib.request.Request(
-            url, method="GET", headers={"User-Agent": "readme-doctor/0.1"})
+            url, method="GET", headers={"User-Agent": "readme-doctor/0.2"})
         try:
             with urllib.request.urlopen(req, timeout=15) as resp:
                 if resp.status >= 400:
@@ -158,7 +198,10 @@ def gate_links(text: str, ctx: dict) -> tuple[str, list[str], list[str]]:
     live = ctx.get("live", False)
     problems, warnings = [], []
 
-    for url in collect_links(text):
+    urls, undefined = collect_link_info(text)
+    problems += [f"undefined reference link: {u}" for u in undefined]
+
+    for url in urls:
         if url.startswith("#") or url.startswith("mailto:"):
             continue
         path_part, _, frag = url.partition("#")
@@ -253,8 +296,9 @@ def gate_bilingual(text: str, ctx: dict) -> tuple[str, list[str], list[str]]:
     zh: str | None = ctx.get("zh")
     problems, warnings = [], []
 
+    urls, _ = collect_link_info(text)
     cross = []
-    for url in collect_links(text):
+    for url in urls:
         path_part = url.partition("#")[0]
         if (path_part.endswith(".md") and README_LANG_RE.match(Path(path_part).name)
                 and path_part != self_name):
@@ -270,12 +314,11 @@ def gate_bilingual(text: str, ctx: dict) -> tuple[str, list[str], list[str]]:
                             f"(switch documents, not sections): {url}")
 
     if zh:
-        main = base_dir / self_name
         zh_path = base_dir / zh
         if not zh_path.exists():
             problems.append(f"--zh file not found: {zh}")
         else:
-            plain_to_zh = any(u.partition("#")[0] == zh for u in collect_links(text))
+            plain_to_zh = any(u.partition("#")[0] == zh for u in urls)
             if not plain_to_zh:
                 problems.append(f"no switch line: {self_name} never links {zh}")
             zh_links = collect_links(zh_path.read_text(encoding="utf-8"))
@@ -284,7 +327,7 @@ def gate_bilingual(text: str, ctx: dict) -> tuple[str, list[str], list[str]]:
     else:
         for sibling in base_dir.glob("README*.md"):
             if sibling.name != self_name and not any(
-                    u.partition("#")[0] == sibling.name for u in collect_links(text)):
+                    u.partition("#")[0] == sibling.name for u in urls):
                 warnings.append(f"translation on disk but unlinked: {sibling.name}")
     return ("fail" if problems else "pass"), problems, warnings
 
@@ -311,8 +354,8 @@ def gate_admonitions(text: str, ctx: dict) -> tuple[str, list[str], list[str]]:
 
 
 GATES = [
-    ("anchors", "internal anchors resolve (GitHub slug rules)", gate_anchors),
-    ("links", "link targets exist (GET, not HEAD, when --live)", gate_links),
+    ("anchors", "internal anchors resolve (GitHub slug rules, setext too)", gate_anchors),
+    ("links", "link targets exist; reference links defined (GET when --live)", gate_links),
     ("spelling", "one canonical surface form of the project name", gate_spelling),
     ("badges", "<= 4 badges, meaningful hrefs, flat-square", gate_badges),
     ("bilingual", "bidirectional switch line, zero stale cross-refs", gate_bilingual),
@@ -333,6 +376,8 @@ def run_doctor(readme: Path, args) -> int:
         "allow": set(args.allow or []),
     }
     fails = 0
+    report = {"file": str(readme), "name": args.name, "live": bool(args.live),
+              "gates": []}
     print(f"readme_doctor: {readme}"
           + ("  [live]" if args.live else "  [offline]"))
     for i, (name, desc, fn) in enumerate(GATES, 1):
@@ -342,12 +387,18 @@ def run_doctor(readme: Path, args) -> int:
             tag += "+WARN"
         if status == "fail":
             fails += 1
+        report["gates"].append({"gate": i, "name": name, "status": status,
+                                "details": details, "warnings": warnings})
         print(f"  gate {i} {name:<11} {tag}  -- {desc}")
         for line in details:
             print(f"      {line}")
         for line in warnings:
             print(f"      WARN: {line}")
-    print(f"  -> {'ALL GREEN' if fails == 0 else str(fails) + ' GATE(S) FAILED'}")
+    summary = "ALL GREEN" if fails == 0 else f"{fails} GATE(S) FAILED"
+    print(f"  -> {summary}")
+    if args.json:
+        report["failed_gates"] = fails
+        print(json.dumps(report, ensure_ascii=False, indent=2))
     return 1 if fails else 0
 
 
@@ -370,23 +421,16 @@ def selftest() -> int:
                   gate_anchors, "## 🚀 Install\nsee [install](#-install)\n", {}))
     cases.append(("1", "must-not-fire: duplicate heading suffix", "pass",
                   gate_anchors, "## Install\n## Install\n[a](#install) [b](#install-1)\n", {}))
+    cases.append(("1", "must-not-fire: setext heading anchor", "pass",
+                  gate_anchors, "Install\n========\nsee [install](#install)\n", {}))
 
     # gate 2 links
     cases.append(("2", "must-not-fire: well-formed https offline", "pass",
                   gate_links, "[x](https://example.com/a)\n", {"base_dir": Path("."), "self_name": "README.md"}))
     cases.append(("2", "must-fire: malformed scheme", "fail",
                   gate_links, "[x](htp:/oops)\n", {"base_dir": Path("."), "self_name": "README.md"}))
-
-    def _link_file_cases(tmp: Path):
-        (tmp / "exists.md").write_text("# Real\n", encoding="utf-8")
-        (tmp / "README.md").write_text("[a](exists.md#real) [b](gone.md)\n", encoding="utf-8")
-        text = (tmp / "README.md").read_text(encoding="utf-8")
-        return [
-            ("2", "must-fire: missing relative target + bad cross-file frag", "fail",
-             gate_links, text, {"base_dir": tmp, "self_name": "README.md"}),
-            ("2", "must-not-fire: existing target, valid cross-file frag", "pass",
-             gate_links, "[a](exists.md#real)\n", {"base_dir": tmp, "self_name": "README.md"}),
-        ]
+    cases.append(("2", "must-fire: undefined reference-style label", "fail",
+                  gate_links, "[docs][nope]\n", {"base_dir": Path("."), "self_name": "README.md"}))
 
     # gate 3 spelling
     cases.append(("3", "must-fire: mixed surfaces", "fail",
@@ -416,27 +460,12 @@ def selftest() -> int:
         status, _, warnings = gate_badges(text, {})
         return "pass-with-warn" if status == "pass" and warnings else "other"
 
-    # gate 5 bilingual
-    cases.append(("5", "must-fire: stale zh reference", "fail",
-                  gate_bilingual, "[zh](README.zh-CN.md#quick-start)\n",
-                  {"base_dir": Path("."), "self_name": "README.md"}))
+    def _anchor_suggest_case():
+        status, details, _ = gate_anchors("## Install\nsee [go](#instal)\n", {})
+        ok = status == "fail" and any("did you mean" in d for d in details)
+        return "fail-with-suggestion" if ok else "other"
 
-    def _zh_cases(tmp: Path):
-        (tmp / "README.md").write_text(
-            "**English** | [zh](README.zh-CN.md)\n", encoding="utf-8")
-        (tmp / "README.zh-CN.md").write_text(
-            "[en](README.md) | **zh**\n", encoding="utf-8")
-        (tmp2 := Path(tempfile.mkdtemp(dir=tmp)))
-        (tmp2 / "README.md").write_text("[zh](README.zh-CN.md)\n", encoding="utf-8")
-        (tmp2 / "README.zh-CN.md").write_text("no back link\n", encoding="utf-8")
-        return [
-            ("5", "must-not-fire: bidirectional pair", "pass", gate_bilingual,
-             (tmp / "README.md").read_text(encoding="utf-8"),
-             {"base_dir": tmp, "self_name": "README.md", "zh": "README.zh-CN.md"}),
-            ("5", "must-fire: missing reverse switch line", "fail", gate_bilingual,
-             (tmp2 / "README.md").read_text(encoding="utf-8"),
-             {"base_dir": tmp2, "self_name": "README.md", "zh": "README.zh-CN.md"}),
-        ]
+    # gate 5 bilingual (file-dependent cases run in the temp dir below)
 
     # gate 6 admonitions
     cases.append(("6", "must-fire: lowercase [!important]", "fail",
@@ -449,8 +478,48 @@ def selftest() -> int:
     failed = 0
     with tempfile.TemporaryDirectory() as td:
         tmp = Path(td)
-        cases += _link_file_cases(tmp)
-        cases += _zh_cases(tmp)
+
+        def _link_file_cases():
+            (tmp / "exists.md").write_text("# Real\n", encoding="utf-8")
+            (tmp / "README.md").write_text("[a](exists.md#real) [b](gone.md)\n", encoding="utf-8")
+            text = (tmp / "README.md").read_text(encoding="utf-8")
+            return [
+                ("2", "must-fire: missing relative target + bad cross-file frag", "fail",
+                 gate_links, text, {"base_dir": tmp, "self_name": "README.md"}),
+                ("2", "must-not-fire: existing target, valid cross-file frag", "pass",
+                 gate_links, "[a](exists.md#real)\n", {"base_dir": tmp, "self_name": "README.md"}),
+                ("2", "must-not-fire: defined reference-style link resolves", "pass",
+                 gate_links, "[docs][guide]\n\n[guide]: exists.md#real\n",
+                 {"base_dir": tmp, "self_name": "README.md"}),
+                ("1", "must-fire: reference link to missing fragment", "fail",
+                 gate_anchors, "[top][up]\n\n[up]: #nope\n", {}),
+            ]
+
+        def _zh_cases():
+            (tmp / "README.md").write_text(
+                "**English** | [zh](README.zh-CN.md)\n", encoding="utf-8")
+            (tmp / "README.zh-CN.md").write_text(
+                "[en](README.md) | **zh**\n", encoding="utf-8")
+            (tmp2 := tmp / "no-back")
+            tmp2.mkdir()
+            (tmp2 / "README.md").write_text("[zh](README.zh-CN.md)\n", encoding="utf-8")
+            (tmp2 / "README.zh-CN.md").write_text("no back link\n", encoding="utf-8")
+            (tmp3 := tmp / "stale")
+            tmp3.mkdir()
+            return [
+                ("5", "must-not-fire: bidirectional pair", "pass", gate_bilingual,
+                 (tmp / "README.md").read_text(encoding="utf-8"),
+                 {"base_dir": tmp, "self_name": "README.md", "zh": "README.zh-CN.md"}),
+                ("5", "must-fire: missing reverse switch line", "fail", gate_bilingual,
+                 (tmp2 / "README.md").read_text(encoding="utf-8"),
+                 {"base_dir": tmp2, "self_name": "README.md", "zh": "README.zh-CN.md"}),
+                ("5", "must-fire: stale zh reference (file missing)", "fail",
+                 gate_bilingual, "[zh](README.zh-CN.md#quick-start)\n",
+                 {"base_dir": tmp3, "self_name": "README.md"}),
+            ]
+
+        cases += _link_file_cases()
+        cases += _zh_cases()
         for gate, label, expect, fn, text, ctx in cases:
             got = _run_one(fn, text, ctx)
             ok = (got == expect)
@@ -464,7 +533,13 @@ def selftest() -> int:
             failed += 1
         print(f"  [{'PASS' if ok else 'FAIL'}] gate 4 selftest: non-flat-square "
               f"badge warns without failing (got {warn_probe})")
-    total = len(cases) + 1
+        suggest_probe = _anchor_suggest_case()
+        ok = suggest_probe == "fail-with-suggestion"
+        if not ok:
+            failed += 1
+        print(f"  [{'PASS' if ok else 'FAIL'}] gate 1 selftest: broken anchor "
+              f"carries nearest-slug suggestion (got {suggest_probe})")
+    total = len(cases) + 2
     print(f"selftest: {total - failed}/{total} green")
     return 1 if failed else 0
 
@@ -479,6 +554,8 @@ def main(argv=None) -> int:
                     help="liveness-check http(s) links with GET (default: offline)")
     ap.add_argument("--allow", action="append", default=[],
                     help="whitelist an extra surface form of the name (repeatable)")
+    ap.add_argument("--json", action="store_true",
+                    help="also print a machine-readable JSON report (for CI/agent loops)")
     ap.add_argument("--selftest", action="store_true",
                     help="run the built-in dual-anchor fixtures and exit")
     args = ap.parse_args(argv)

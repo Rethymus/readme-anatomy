@@ -1,6 +1,11 @@
 ---
 name: readme-anatomy
-description: Rewrite and audit project READMEs with a measurement-first method — centered header anatomy, tiered claims, bilingual drift policy, agent-fetchable install one-liners, and machine-checkable gates. Use whenever the user asks to write, rework, translate, or audit a README, or says the README "looks AI-generated", "is sloppy", or needs badges, admonitions, a table of contents, or an install command.
+description: Rewrite and audit project READMEs with a measurement-first method — centered header anatomy, tiered claims, bilingual drift policy, agent-fetchable install one-liners, and machine-checkable gates. Use whenever the user asks to write, rework, audit, or translate a README (帮我写 README、重写 README、审计 README、中英双语 README), says the README "looks AI-generated", "is sloppy", or "makes claims I can't verify", or needs badges, admonitions, a table of contents, or an install command. Covers new-write, full-rewrite, small-edit, audit-only, and translate task modes.
+license: MIT
+compatibility: scripts/ need Python 3.10+ (stdlib only); gates run offline by default
+metadata:
+  version: "0.2"
+  method-origin: "distilled from the glasspring README rework (2026-10-27)"
 ---
 
 # readme-anatomy — measurement-first README craft
@@ -38,6 +43,19 @@ report (Step 7).
    source of truth? (Unanswered, this question silently rots into drift. See
    `references/bilingual.md`.)
 
+## Step 0a — Pick the narrowest task mode
+
+Full ceremony on a one-line edit is how skills breed busywork. Pick the
+narrowest mode that covers the request, and say which mode you picked:
+
+| Mode | Trigger | Scope |
+|---|---|---|
+| **new** | No README, or a from-scratch rewrite was asked | Full Steps 1–7, scaffold from `assets/templates/` |
+| **rewrite** | Existing README, user wants the method applied | Full Steps 1–7, claim-by-claim audit |
+| **small-edit** | A section, badge, link, or wording fix | Touch only the affected section; re-run gates on the whole file; skip the Four Questions except the one the edit touches (usually Q3) |
+| **audit-only** | "Check/audit my README" — no rewrites requested | No edits. Deliver the gate output + tier table as findings |
+| **translate** | "Translate my README" / bilingual setup | Steps 4 + 6 only; read `references/bilingual.md` |
+
 ## Step 1 — Read references on demand (budget: ≤ 3 per task)
 
 Long-context models lose information in the middle of bloated context
@@ -50,7 +68,8 @@ Read only what the Four Questions route you to:
 | `references/claims-posture.md` | Always, before finalizing any claim, badge, or admonition |
 | `references/bilingual.md` | Only when Q4 = bilingual |
 | `references/install-one-liner.md` | When writing the install section of anything installable |
-| `references/research.md` | Only when a rule's rationale is challenged or an anchor must be re-verified |
+| `references/agent-surfaces.md` | When the repo also carries AGENTS.md or llms.txt, or the user asks what agents read |
+| `references/research.md` | When a rule's rationale is challenged, an anchor must be re-verified, or the decay watchlist is due |
 
 ## Step 2 — Restructure (L1)
 
@@ -74,7 +93,8 @@ Full wording patterns and worked examples: `references/claims-posture.md`.
 
 ## Step 4 — Bilingual policy (only if Q4 = bilingual)
 
-Declare the source of truth in both files' `[!NOTE]`, wire the bidirectional
+Declare the source of truth in the translation's `[!NOTE]` (see
+`references/bilingual.md`), wire the bidirectional
 switch line (current language bold, the other a link), and leave zero stale
 cross-language references. Drift handling tiers: `references/bilingual.md`.
 
@@ -88,7 +108,11 @@ Install <name> for me: <raw.githubusercontent.com URL>
 ```
 
 The URL must be GET-fetchable (raw endpoints reject HEAD — see the gate). Local
-clone paths are a fallback, never the headline. Construction and self-test:
+clone paths are a fallback, never the headline. If the repo also carries
+`AGENTS.md` or `llms.txt`, keep the three surfaces consistent — the README
+links to them, never copies them (`references/agent-surfaces.md`). The one-liner
+is executable trust: pin a tag, name the canonical host, and never let it point
+anywhere but the project's own raw content. Construction and self-test:
 `references/install-one-liner.md`.
 
 ## Step 6 — Run the gates (L3)
@@ -132,6 +156,9 @@ evidence path to back it.
   thousands" unless a tier-verified number replaces them.
 - Anchors cite, they do not depend. If an external source dies, this skill's
   rules still stand (see `references/research.md` for the ledger).
+- The README is for humans; `AGENTS.md` is for agents. Merging them bloats
+  both — agent instruction files measurably balloon over a project's life
+  (see `references/agent-surfaces.md`).
 - Admonitions are for boundaries and policies, not emphasis. Three or more of
   the same type in one document means prose failed, not that the reader needs
   a louder box.

@@ -1,0 +1,18 @@
+name: readme-gates
+
+on: [push, pull_request]
+
+jobs:
+  gates:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: selftest (dual-anchor fixtures)
+        run: python scripts/readme_doctor.py --selftest
+      - name: gates on own README (bilingual)
+        run: python scripts/readme_doctor.py README.md --name readme-anatomy --zh README.zh-CN.md
+      - name: json report smoke (machine-readable output parses)
+        run: python scripts/readme_doctor.py README.md --name readme-anatomy --json > /dev/null

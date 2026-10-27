@@ -45,6 +45,24 @@ Rules:
   Pointing the one-liner at `README.md` itself is circular and therefore
   forbidden.
 
+## Security posture — an install line is executable trust
+
+A 2026 study ("Setup Complete, Now You Are Compromised: Weaponizing Setup
+Instructions Against AI Coding Agents", anchor in `research.md`) shows setup
+instructions — READMEs included — are an active supply-chain attack surface
+against coding agents, and registry redirection inside them is rarely caught.
+The one-liner inherits that risk, so:
+
+- Pin a **tag**, never a branch: already a rule above, now a security rule
+  too — the quoted sentence must not change meaning after the next commit.
+- The URL host must be the project's **canonical** host. Keep the README's
+  `[!WARNING]` channel-exclusivity note current so readers can detect impostor
+  instructions claiming to be this project.
+- For binaries, prefer release assets with published checksums, and have the
+  one-liner's target document verify the checksum before running anything.
+- Never chain a third-party redirector or URL shortener into the one-liner —
+  both break provenance, and both are how redirection attacks hide.
+
 ## Self-test before publishing
 
 1. `curl -L <url>` returns 200 with the file's bytes (not HEAD — see above).

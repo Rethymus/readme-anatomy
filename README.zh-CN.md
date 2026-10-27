@@ -1,0 +1,129 @@
+<!-- 简体中文翻译 · 源文件为英文 README.md（source of truth）。
+     漂移策略见文首 [!NOTE]；本文件由双语门禁（gate 5）校验。 -->
+
+# readme-anatomy
+
+*把 README 写作变成一门测量学科的项目 skill——结构、主张分级、机器门禁。*
+
+> [!NOTE]
+> 英文 `README.md` 是 source of truth。本翻译可能滞后；冲突时以英文版为准。最后同步：2026-10-28。
+
+agent 能否证明一份 README 说的是真话，而不只是把它写得看起来可信？
+
+30 秒：[安装](#3-安装) · [对照](#2-30-秒对照) · [能力](#4-能力) · [证据](#7-证据)
+
+[English](README.md) | **简体中文**
+
+**目录**
+
+1. [为什么要有这个项目](#1-为什么要有这个项目)
+2. [30 秒对照](#2-30-秒对照)
+3. [安装](#3-安装)
+4. [能力](#4-能力)
+5. [工作原理](#5-工作原理)
+6. [边界（这个 skill 不做什么）](#6-边界这个-skill-不做什么)
+7. [证据](#7-证据)
+8. [常见问题](#8-常见问题)
+9. [参与贡献](#9-参与贡献)
+10. [许可证](#10-许可证)
+
+## 1. 为什么要有这个项目
+
+LLM 辅助的 README 生成解决了空白页问题，却制造了真实性问题：文档*看起来*
+很可信——徽章墙、自信的形容词、整齐的小节——但其中的主张从未被按"如何
+验证"分类过。readme-anatomy 押相反的一注：README 是一份契约，每句话都要
+归入一个层级（已验证 / 开发档案 / 禁止的营销话术），当结构或引用腐烂时，
+机器门禁会让文档直接 FAIL。它以
+[Agent Skill](https://agentskills.io/specification) 的形态存在，是为了让
+任何 agent 都能*执行*这套方法，而不只是欣赏它。
+
+## 2. 30 秒对照
+
+| 提示词式 README 生成 | readme-anatomy |
+|---|---|
+| 产出可信的外观 | 强制主张分级；营销措辞直接删除 |
+| 按模板拼结构 | 按解剖学 + 项目类型侧重排结构 |
+| "看起来不错"就是标准 | `readme_doctor.py` 六项门禁必须退出码 0 |
+| 双语靠事后补 | 第一天就声明 source of truth + 漂移策略 |
+
+## 3. 安装
+
+> [!NOTE]
+> v0 脚手架（M0）。agent 可抓取的安装一句话将在首次公开发布（M3）时启用
+> ——指向未发布 URL 的一句话会通不过它自己的自测。
+
+当前请从检出版使用：
+
+```bash
+git clone <this-repo-url> && cd readme-anatomy
+python scripts/readme_doctor.py --selftest   # 预期：全绿
+```
+
+然后让 agent 读取 `SKILL.md`（见你的客户端 skill 加载文档），或把
+`readme-anatomy/` 目录复制进你的 skills 目录。
+
+## 4. 能力
+
+- 通过四问路由（项目类型、读者的 30 秒、主张强度、双语策略）重写或审计
+  README。
+- 把每条主张归入三个层级，并给出各层级的措辞范式。
+- 用六项离线机器门禁校验 README（仅标准库 Python）；解析引用式链接与
+  setext 标题；可选 `--live` 用 GET 探活；`--json` 输出机读报告供 CI 与
+  agent 循环使用；坏锚点附带最近 slug 建议。
+- 每个任务先路由到五种模式之一（新建 / 重写 / 小改 / 只审计 / 翻译），
+  小改动不承担全流程成本。
+- 让仓库的 agent 表面层（AGENTS.md、llms.txt）与 README 保持一致，
+  而不是互相复制。
+- 附真实重写前后对照对（脱敏）与头部、证据表、FAQ 的即用模板。
+
+## 5. 工作原理
+
+这个 skill 编码了三层：**解剖学**（结构：头部要素、章节次序、目录）、
+**语义契约**（主张分级、admonition 语义学、双语漂移策略、agent 可抓取的
+安装一句话）、**门禁**（`scripts/readme_doctor.py`）。agent 回答四个问题，
+最多读三份参考文件（长上下文纪律，见 `references/research.md`），重写，
+然后跑到门禁全绿为止。规则引用锚点；锚点从不承载规则。
+
+## 6. 边界（这个 skill 不做什么）
+
+> [!IMPORTANT]
+> 门禁全绿是必要条件，不是充分条件。doctor 认证的是"可检查性"，不是
+> 真实性；主张层级由 agent 提议、由作者签字确认。
+
+- 不生成营销文案式的"可信外观"——那是本 skill 要对抗的反模式。
+- 不做全自动翻译——只管约定与漂移策略。
+- 不复制第三方模板内容——锚点只引用，永不搬运。
+
+## 7. 证据
+
+| 主张 | 在哪 | 备注 |
+|---|---|---|
+| 六门禁 + 双锚点自测 | `scripts/readme_doctor.py` 的 `--selftest` | 27 个 fixture：每门禁都有命中与防误报两用例 |
+| 真实重写前后对（脱敏） | `assets/before.md`、`assets/after.md` | 起源项目重构前快照 vs 重写版（头部/目录/FAQ/一句话安装）；出处见 `evals/ledger.md` |
+| 规则带出处锚点 | `references/research.md` | 全部 URL 已于 2026-10-27 验证；衰变观察哨列出最先腐烂之处 |
+| agent 表面层纪律 | `references/agent-surfaces.md` | 基于 AGENTS.md 标准与 2026 文献（指令文件膨胀；setup 指令武器化） |
+| 双语自食其果 | `README.md` + `README.zh-CN.md`，gate 5 | 本仓库消费自己的双语门禁 |
+| CI 强制执行 | `.github/workflows/readme-gates.yml` | 每次 push 跑自测 + 双语两文件门禁 |
+| 方法有先行文献 | `references/research.md`（文献表） | Prana 2018；README 热度实证 2022；Liu 2023；2026 文献簇（READU、指令膨胀、setup 攻击面） |
+
+## 8. 常见问题
+
+- *为什么是 skill 而不是 linter？* linter 能让坏锚点 FAIL，却无法判定
+  "blazingly fast"必须改成分级的数字或删除。本 skill 把判断（agent +
+  references）与强制（门禁）配对。
+- *和 readme-ai 有什么不同？* readme-ai 生成可信外观的文档；readme-anatomy
+  强迫主张变得可检查。完整的先行者地图见 `references/research.md`。
+- *它会取代 AGENTS.md 吗？* 不会——两者是不同表面层。README 给人读；
+  `AGENTS.md` 给在仓库里干活的 agent 读。本 skill 让二者保持一致
+  （一个事实，一个家），而不是合并。见 `references/agent-surfaces.md`。
+- *它会原地重写我的 README 吗？* agent 提议，你批准。主张分级在作者签字
+  前都只是提议表。
+
+## 9. 参与贡献
+
+欢迎 issue 与 PR。最有价值的两类贡献：新的自测 fixture（能被你塞进假阳性
+的门禁就是 bug），以及 `evals/ledger.md` 里的 dogfood 记录。
+
+## 10. 许可证
+
+MIT——见 [LICENSE](LICENSE)。

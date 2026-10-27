@@ -13,6 +13,7 @@ which.
 | Date | Target | Round | Structure | Claims | Gates | Reader-30s | Notes / known limitations | Decision |
 |---|---|---|---|---|---|---|---|---|
 | 2026-10-27 | this repo (M0+M1 scaffold) | 0 (bootstrap) | — | — | selftest 22/22 | — | gates all green on the repo's own README; real desensitized rewrite pair landed during M0 reconciliation; gate 3 gained a fixture-backed precision fix (case-only variants are one form; separators are identity) from dogfooding the real pair | scaffold accepted |
+| 2026-10-28 | this repo (research iteration, v0.2) | 0.5 | — | — | selftest 27/27 | — | evening sweep: ecosystem re-verified (superpowers/addyosmani — whitespace holds); 2026 literature cluster anchored; doctor v0.2 (ref-links, setext, --json, anchor suggestions); agent-surfaces.md added; bilingual self-dogfood (README.zh-CN.md, gate 5 both ways); CI workflow | accepted |
 | (planned) | agent-comparability README | 1 | | | | | dogfood, full rubric + blind pair | |
 | (planned) | glasspring README (upstream PR if welcomed) | 2 | | | | | dogfood on the origin project | |
 | (planned) | one external open-source repo | 3 | | | | | external validity check | |

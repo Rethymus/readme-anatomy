@@ -6,6 +6,8 @@ Can an agent prove a README tells the truth, instead of merely making it look co
 
 30 seconds: [Install](#3-install) · [Contrast](#2-30-second-contrast) · [Capabilities](#4-capabilities) · [Evidence](#7-evidence)
 
+**English** | [简体中文](README.zh-CN.md)
+
 **Contents**
 
 1. [Why this exists](#1-why-this-exists)
@@ -62,7 +64,13 @@ copy the `readme-anatomy/` directory into your skills directory.
   reader's 30 seconds, claim strength, bilingual policy).
 - Classifies every claim into three tiers with wording patterns for each.
 - Validates a README with six offline machine gates (stdlib-only Python);
-  optional `--live` link liveness using GET.
+  reference-style links and setext headings parsed; optional `--live` link
+  liveness using GET; `--json` report for CI and agent loops; broken anchors
+  come back with nearest-slug suggestions.
+- Routes every task through five modes (new / rewrite / small-edit /
+  audit-only / translate) so small edits don't inherit full-ceremony cost.
+- Keeps the repo's agent surfaces (AGENTS.md, llms.txt) consistent with the
+  README instead of duplicating it.
 - Carries a before/after few-shot pair and copy-paste templates for header,
   evidence table, and FAQ.
 
@@ -94,8 +102,11 @@ Rules cite anchors; anchors never carry the rules.
 |---|---|---|
 | Six gates with dual-anchor selftest | `scripts/readme_doctor.py`, `--selftest` | each gate ships a must-fire and a must-not-fire fixture |
 | Real rewrite pair, desensitized | `assets/before.md`, `assets/after.md` | origin project's pre-rework snapshot vs the rework (header/TOC/FAQ/one-liner); provenance in `evals/ledger.md` |
-| Rules carry source anchors | `references/research.md` | all URLs verified 2026-10-27 |
-| Method grounded in prior art | `references/research.md` (literature table) | Prana 2018; README-popularity study 2022; Liu 2023 |
+| Rules carry source anchors | `references/research.md` | all URLs verified 2026-10-27; decay watchlist ranks what rots first |
+| Agent-surface discipline | `references/agent-surfaces.md` | grounded in the AGENTS.md standard and 2026 literature (instruction-file bloat; weaponized setup instructions) |
+| Bilingual self-dogfood | `README.md` + `README.zh-CN.md`, gate 5 | this repo consumes its own bilingual gates |
+| CI enforcement | `.github/workflows/readme-gates.yml` | selftest + gates on both language files on every push |
+| Method grounded in prior art | `references/research.md` (literature tables) | Prana 2018; README-popularity study 2022; Liu 2023; 2026 cluster (READU, instruction bloat, setup-instruction attacks) |
 
 ## 8. FAQ
 
@@ -105,6 +116,10 @@ Rules cite anchors; anchors never carry the rules.
 - *How is this different from readme-ai?* readme-ai generates
   credible-looking documents; readme-anatomy forces claims to be checkable.
   See `references/research.md` for the full prior-art map.
+- *Does this replace AGENTS.md?* No — they are different surfaces. The README
+  is for humans; `AGENTS.md` is for agents working in the repo. This skill
+  keeps them consistent (one fact, one home) instead of merging them. See
+  `references/agent-surfaces.md`.
 - *Does it rewrite my README in place?* The agent proposes; you approve. Claim
   tiers are a proposal table until the author signs off.
 
