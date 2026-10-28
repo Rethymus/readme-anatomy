@@ -16,9 +16,10 @@ URLs verified reachable: **2026-10-27** (first sweep, morning) and
 | llms.txt proposal | Site-level markdown index for LLM consumption (`llms-full.txt` variant); format proposal, adoption emerging — verify currency before relying | https://llmstxt.org |
 | RichardLitt/standard-readme (6.4k★) | Canonical section order; spec-style README norms | https://github.com/RichardLitt/standard-readme |
 | matiassingers/awesome-readme (21.6k★) | Curated corpus behind the badge/structure rules of thumb | https://github.com/matiassingers/awesome-readme |
-| anthropics/skills (184k★) | Official skill repo — no README-class skill (whitespace re-confirmed) | https://github.com/anthropics/skills |
-| obra/superpowers (306k★, 15 skills) | Largest community skill framework — methodology skills (TDD, debugging, plans); **no README-craft skill** (whitespace re-confirmed 2026-10-27 evening) | https://github.com/obra/superpowers |
-| addyosmani/agent-skills (111k★) | Production engineering skills (code-review/security/test/perf personas) + evals fixtures; **no README-craft skill** (whitespace re-confirmed) | https://github.com/addyosmani/agent-skills |
+| anthropics/skills (184k★) | Official skill repo — no README-class skill in its directory (framework-level whitespace re-confirmed 2026-10-28) | https://github.com/anthropics/skills |
+| obra/superpowers (306k★, 15 skills) | Largest community skill framework — methodology skills (TDD, debugging, plans); **no README-craft skill** (framework-level whitespace re-confirmed 2026-10-28) | https://github.com/obra/superpowers |
+| addyosmani/agent-skills (111k★) | Production engineering skills (code-review/security/test/perf personas) + evals fixtures; **no README-craft skill** (framework-level whitespace re-confirmed) | https://github.com/addyosmani/agent-skills |
+| Embedded README skills (red ocean, 2026-10-28) | 8152 project-local skills via code search (`filename:SKILL.md readme in:path`); sampled types: style-clone (remix-run/write-readme), multi-stage supervisor (getkyo/kyo /readme), structure template (langgraph4j/make_readme) — **zero claim-tiering / machine-gate / bilingual-discipline occurrences in the sample**; this skill's differentiation is scoped to exactly that gap | code search, ledger 4.3 |
 | eli64s/readme-ai (~3k★) | Counter-example: template+LLM generation of "credible appearance" without claim management | https://github.com/eli64s/readme-ai |
 | tommy0103/better-readme-skill (30★) | Nearest prior skill: cognitive-funnel audit/rewrite. Stops at structure; no claim tiers, no gates, no bilingual drift policy | https://github.com/tommy0103/better-readme-skill |
 | noffle, *Art of README* | Cognitive-funnel grounding for section order. **Original repo is offline (404 as of 2026-10-27)**; an archived copy is vendored inside better-readme-skill — cite that path, not a dead link | via https://github.com/tommy0103/better-readme-skill |
@@ -73,11 +74,20 @@ thresholds.
    handling or admonition syntax. Probe: `--selftest` catches internal
    regressions; each release, probe one real emoji-headed README against
    github.com rendering by hand.
-2. **Ecosystem whitespace closes.** A major framework (superpowers /
-   addyosmani / anthropics) ships a README-craft skill and our differentiation
-   claim goes stale. Probe: **automated monthly** by
-   `.github/workflows/ecosystem-watch.yml` (top-level scan of the three
-   flagship skill directories; a hit is a red light, not a broken build).
+2. **Ecosystem whitespace closes — scoped claim, three automated layers.**
+   The 2026-10-28 first full code sweep **revised the claim**: embedded
+   README skills are a red ocean (code search `filename:SKILL.md readme
+   in:path` → total_count **8152**; sampled remix-run/write-readme
+   [style-clone], getkyo/kyo [/readme supervisor], langgraph4j/make_readme
+   [structure-template] — none carry claim tiers, machine gates, or
+   bilingual discipline). The surviving whitespace is precisely scoped:
+   **framework-level directories stay empty, and the claims-discipline +
+   machine-gates route had zero occurrences in the sample.** Probe:
+   **automated monthly** by `.github/workflows/ecosystem-watch.yml` —
+   (a) flagship-framework + high-star skill-hub directory scan, a hit is a
+   red light; (b) code-search baseline tracking against 8152 (a >50% surge
+   red-lights "adoption accelerating"); (c) name/description resonance as
+   WARN-only early warning.
 3. **agentskills.io spec evolution.** New required frontmatter fields or a
    stricter validator would fail our SKILL.md. Probe: **mechanical half
    automated on every push** — `scripts/validate_skill.py` in CI enforces the
