@@ -20,6 +20,8 @@ jobs:
         run: |
           python scripts/validate_skill.py --selftest
           python scripts/validate_skill.py .
+      - name: MCP server selftest (child-process handshake over stdio)
+        run: python scripts/mcp_server.py --selftest
       - name: gates on own README (bilingual)
         run: python scripts/readme_doctor.py README.md --name readme-anatomy --zh README.zh-CN.md
       - name: json report smoke (machine-readable output parses)

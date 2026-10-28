@@ -53,7 +53,7 @@ LLM 辅助的 README 生成解决了空白页问题，却制造了真实性问�
 **给你的 agent 的一句话：**
 
 ```text
-Install readme-anatomy for me: https://raw.githubusercontent.com/Rethymus/readme-anatomy/v0.5.0/INSTALL.md
+Install readme-anatomy for me: https://raw.githubusercontent.com/Rethymus/readme-anatomy/v0.6.0/INSTALL.md
 ```
 
 优先用一句话。从检出版使用：
@@ -82,6 +82,8 @@ python scripts/readme_doctor.py --selftest   # 预期：全绿
   小改动不承担全流程成本。
 - 让仓库的 agent 表面层（AGENTS.md、llms.txt）与 README 保持一致，
   而不是互相复制。
+- 整条工具链以 MCP stdio 服务暴露（`scripts/mcp_server.py`——三工具、
+  JSON-RPC 2.0、零 SDK 依赖），偏好原生工具调用的宿主无需绕行 shell。
 - 附真实重写前后对照对（脱敏）与头部、证据表、FAQ 的即用模板。
 
 ## 5. 工作原理

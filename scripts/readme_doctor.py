@@ -577,62 +577,75 @@ def _git(base_dir: Path, args: list[str]) -> str | None:
         return None
 
 
-def run_doctor(readme: Path, args) -> int:
+def run_gates(readme: Path, *, name: str | None = None, zh: str | None = None,
+              live: bool = False, allow: list[str] | tuple = (), fix: bool = False) -> dict:
+    """Programmatic entry (used by the CLI and by scripts/mcp_server.py):
+    run the gates, optionally apply mechanical fixes in place, and return the
+    structured report dict (fixes, per-gate results, failed_gates)."""
     text = readme.read_text(encoding="utf-8")
     fixes: list[str] = []
-    if args.fix:
+    if fix:
         text, toc_changed = fix_toc(text)
         if toc_changed:
             fixes.append("TOC regenerated from current H2 headings")
         text, n_badges = fix_badge_styles(text)
         if n_badges:
             fixes.append(f"{n_badges} badge URL(s) -> style=flat-square")
-        if args.name:
-            text, n_names = fix_name_surfaces(
-                text, args.name, set(args.allow or []))
+        if name:
+            text, n_names = fix_name_surfaces(text, name, set(allow or []))
             if n_names:
-                fixes.append(f"{n_names} drifted name occurrence(s) -> {args.name!r}")
+                fixes.append(f"{n_names} drifted name occurrence(s) -> {name!r}")
         if fixes:
             readme.write_text(text, encoding="utf-8")
-            for f in fixes:
-                print(f"  fixed: {f}")
-        else:
-            print("  fix: nothing mechanical to repair")
     ctx = {
         "base_dir": readme.parent,
         "self_name": readme.name,
-        "name": args.name,
-        "zh": args.zh,
-        "live": args.live,
-        "allow": set(args.allow or []),
+        "name": name,
+        "zh": zh,
+        "live": live,
+        "allow": set(allow or []),
         "latest_tag": _git(readme.parent, ["describe", "--abbrev=0", "--tags"]),
         "origin": _parse_origin(_git(readme.parent, ["remote", "get-url", "origin"])),
     }
     fails = 0
-    report = {"file": str(readme), "name": args.name, "live": bool(args.live),
+    report = {"file": str(readme), "name": name, "live": bool(live),
               "fixes": fixes, "gates": []}
-    print(f"readme_doctor: {readme}"
-          + ("  [live]" if args.live else "  [offline]"))
-    for i, (name, desc, fn) in enumerate(GATES, 1):
+    for i, (gname, desc, fn) in enumerate(GATES, 1):
         status, details, warnings = fn(text, ctx)
-        tag = {"pass": "PASS", "fail": "FAIL", "skip": "SKIP"}[status]
-        if warnings:
-            tag += "+WARN"
         if status == "fail":
             fails += 1
-        report["gates"].append({"gate": i, "name": name, "status": status,
+        report["gates"].append({"gate": i, "name": gname, "status": status,
                                 "details": details, "warnings": warnings})
-        print(f"  gate {i} {name:<11} {tag}  -- {desc}")
-        for line in details:
+    report["failed_gates"] = fails
+    report["summary"] = "ALL GREEN" if fails == 0 else f"{fails} GATE(S) FAILED"
+    return report
+
+
+def run_doctor(readme: Path, args) -> int:
+    report = run_gates(readme, name=args.name, zh=args.zh, live=args.live,
+                       allow=args.allow, fix=args.fix)
+    if args.fix:
+        if report["fixes"]:
+            for f in report["fixes"]:
+                print(f"  fixed: {f}")
+        else:
+            print("  fix: nothing mechanical to repair")
+    print(f"readme_doctor: {readme}"
+          + ("  [live]" if args.live else "  [offline]"))
+    for g in report["gates"]:
+        tag = {"pass": "PASS", "fail": "FAIL", "skip": "SKIP"}[g["status"]]
+        if g["warnings"]:
+            tag += "+WARN"
+        desc = next(d for n, d, _ in GATES if n == g["name"])
+        print(f"  gate {g['gate']} {g['name']:<11} {tag}  -- {desc}")
+        for line in g["details"]:
             print(f"      {line}")
-        for line in warnings:
+        for line in g["warnings"]:
             print(f"      WARN: {line}")
-    summary = "ALL GREEN" if fails == 0 else f"{fails} GATE(S) FAILED"
-    print(f"  -> {summary}")
+    print(f"  -> {report['summary']}")
     if args.json:
-        report["failed_gates"] = fails
         print(json.dumps(report, ensure_ascii=False, indent=2))
-    return 1 if fails else 0
+    return 1 if report["failed_gates"] else 0
 
 
 # --------------------------------------------------------------- selftest ----

@@ -49,6 +49,26 @@ python scripts/readme_scaffold.py --name your-project --type cli-tool --lang bot
 The generated skeleton passes the gates by construction; every
 `<placeholder>` in it is a claim awaiting its tier.
 
+## Use as an MCP server (optional)
+
+Agent hosts that speak MCP can call the toolchain natively instead of via
+the shell -- no SDK dependency, newline-delimited JSON-RPC 2.0 on stdio:
+
+```json
+{ "mcpServers": { "readme-anatomy": {
+    "command": "python",
+    "args": ["<skills-dir>/readme-anatomy/scripts/mcp_server.py"] } } }
+```
+
+Exposes three tools: `readme_doctor` (seven gates, optional in-place fix),
+`readme_scaffold` (gates-clean skeleton), `validate_skill` (spec
+validation). Verify after configuring:
+
+```bash
+python <skills-dir>/readme-anatomy/scripts/mcp_server.py --selftest
+# expect: selftest 9/9 green
+```
+
 ## Uninstall
 
 Delete the copied `readme-anatomy/` directory. Nothing else is written
