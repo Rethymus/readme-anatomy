@@ -436,6 +436,21 @@ PKG_VERSION_RES = (
 )
 
 
+def _ver_eq(a: str, b: str) -> bool:
+    """Semantic-ish version equality: strips a leading v, compares dot-separated
+    numeric segments zero-padded to equal length ("0.4" == "v0.4.0"). Falls
+    back to plain string equality when segments aren't all numeric."""
+    def segs(s: str):
+        s = s.strip().lstrip("vV")
+        parts = s.split(".")
+        return parts if all(p.isdigit() for p in parts) else None
+    sa, sb = segs(a), segs(b)
+    if sa is None or sb is None:
+        return a.strip() == b.strip()
+    width = max(len(sa), len(sb))
+    return sa + ["0"] * (width - len(sa)) == sb + ["0"] * (width - len(sb))
+
+
 def gate_surfaces(text: str, ctx: dict) -> tuple[str, list[str], list[str]]:
     base_dir: Path = ctx["base_dir"]
     self_name: str = ctx["self_name"]
@@ -456,7 +471,7 @@ def gate_surfaces(text: str, ctx: dict) -> tuple[str, list[str], list[str]]:
             problems.append(f"one-liner points at {path} -- circular; target a "
                             "self-contained install document instead")
         if (latest_tag and re.match(r"^v?\d", ref)
-                and ref.lstrip("v") != latest_tag.lstrip("v")):
+                and not _ver_eq(ref, latest_tag)):
             warnings.append(f"one-liner pins {ref} while the latest tag is "
                             f"{latest_tag} -- stale pin (deliberate pins: state why)")
 
@@ -466,14 +481,14 @@ def gate_surfaces(text: str, ctx: dict) -> tuple[str, list[str], list[str]]:
             fm_text = skill_md.read_text(encoding="utf-8")
             m = re.search(r"^metadata:\n(?:\s+[\w.-]+:\s*.*\n)*?\s+version:\s*"
                           r'[\'"]?([^\'"\s]+)', fm_text, re.MULTILINE)
-            if m and m.group(1).lstrip("v") != latest_tag.lstrip("v"):
+            if m and not _ver_eq(m.group(1), latest_tag):
                 problems.append(f"SKILL.md metadata.version {m.group(1)} != "
                                 f"latest tag {latest_tag}")
         for fname, pat in PKG_VERSION_RES:
             f = base_dir / fname
             if f.exists():
                 pm = pat.search(f.read_text(encoding="utf-8"))
-                if pm and pm.group(1).lstrip("v") != latest_tag.lstrip("v"):
+                if pm and not _ver_eq(pm.group(1), latest_tag):
                     warnings.append(f"{fname} version {pm.group(1)} != latest "
                                     f"tag {latest_tag} -- release-process drift")
 
@@ -670,6 +685,11 @@ def selftest() -> int:
               "latest_tag": "v1.1.0"}),
         ]
 
+    def _ver_probe():
+        ok = (_ver_eq("0.4", "v0.4.0") and _ver_eq("1.2.3", "1.2.3")
+              and not _ver_eq("0.4", "0.4.1") and not _ver_eq("main", "v0.4.0"))
+        return "semantic" if ok else "other"
+
     def _stale_pin_probe():
         with tempfile.TemporaryDirectory() as pd:  # neutral dir: no SKILL/pkg files
             status, _, warnings = gate_surfaces(
@@ -791,7 +811,13 @@ def selftest() -> int:
             failed += 1
         print(f"  [{'PASS' if ok else 'FAIL'}] gate 7 selftest: stale one-liner pin "
               f"warns without failing (got {stale_probe})")
-    total = len(cases) + 6
+        ver_probe = _ver_probe()
+        ok = ver_probe == "semantic"
+        if not ok:
+            failed += 1
+        print(f"  [{'PASS' if ok else 'FAIL'}] gate 7 selftest: version equality "
+              f"is semantic (0.4 == v0.4.0, 0.4 != 0.4.1) (got {ver_probe})")
+    total = len(cases) + 7
     print(f"selftest: {total - failed}/{total} green")
     return 1 if failed else 0
 
