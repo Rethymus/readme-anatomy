@@ -33,10 +33,10 @@ Gates
                  point at README.md itself (circular), SKILL.md
                  metadata.version must match the latest tag, and package
                  metadata (pyproject.toml / package.json) version drift vs
-                 the tag is reported (WARN). Grounded in Shan 2026 (83.9%
-                 of multi-surface projects carry a core-field conflict) and
-                 in setup-instruction weaponization research; see
-                 references/agent-surfaces.md and references/research.md.
+                 then reported (WARN). Grounded in multi-surface consistency
+                 research (Shan 2026; precise conflict rate unconfirmed -- see
+                 references/research.md) and in setup-instruction
+                 weaponization research; see references/agent-surfaces.md.
 
 Usage
   python scripts/readme_doctor.py README.md [--name canonical-name]

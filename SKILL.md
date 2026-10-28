@@ -4,7 +4,7 @@ description: Rewrite and audit project READMEs with a measurement-first method â
 license: MIT
 compatibility: scripts/ need Python 3.10+ (stdlib only); gates run offline by default
 metadata:
-  version: "0.6"
+  version: "0.7"
   method-origin: "distilled from the glasspring README rework (2026-10-27)"
 ---
 
@@ -123,6 +123,21 @@ python scripts/readme_doctor.py <README.md> --name <canonical-name> [--zh README
 
 Hosts that speak MCP may instead wire `scripts/mcp_server.py` (stdio) and
 call the `readme_doctor` tool -- same gates, same report, no shell round-trip.
+
+After the evidence table is drafted, run the claims probe (READU-style): it
+verifies every Where cell -- path existence, cross-file anchors, line-number
+ranges, commands on PATH; `--run` executes commands and checks exit codes
+(a trust decision). Write an output contract when the claim quotes a result:
+`` `python scripts/x.py --selftest` -> `42/42 green` `` -- with `--run` the
+text must appear in the output; offline it stays WARN, because an unverified
+output claim is not a pass. The probe certifies that anchors *resolve*; it
+does not certify the claim is true. Deliberately a separate tool, not gate 8:
+the doctor's gates apply to any README, the evidence table is this method's
+contract.
+
+```
+python scripts/claims_probe.py <README.md> [--run]
+```
 
 Stdlib-only, offline by default (`--live` adds real link liveness via GET).
 Seven gates:

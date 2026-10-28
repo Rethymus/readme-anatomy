@@ -22,11 +22,13 @@ and the agent file grows prose nobody's agent obeys.
    README "so everything is in one place" — that is how READMEs bloat. If the
    project needs agent behavior docs, add `AGENTS.md` and reference it from
    the README's Contributing section ("for AI agents: see `AGENTS.md`").
-3. **Agent instruction files bloat measurably.** A 2026 study found
-   agent-facing instruction files (CLAUDE.md et al.) grow ~226% over their
-   lifetime ("catastrophic remembering"); encoding *rationale* instead of
-   accumulating rules keeps them lean. When you touch an AGENTS.md, delete as
-   often as you add, and say why a rule exists in one clause.
+3. **Agent instruction files bloat measurably.** A 2026 study reports that
+   agent-facing instruction files (CLAUDE.md et al.) grow substantially over
+   their lifetime ("catastrophic remembering"; the exact rate is
+   **unconfirmed** — see the ledger note in `research.md`), and that encoding
+   *rationale* instead of accumulating rules curbs the growth. When you touch
+   an AGENTS.md, delete as often as you add, and say why a rule exists in one
+   clause.
 4. **Install lines are executable trust.** A 2026 security study weaponizes
    setup instructions (READMEs, Makefiles, requirements) against coding
    agents — registry redirection is rarely caught. Therefore: pin tags, never

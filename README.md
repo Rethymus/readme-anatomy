@@ -48,7 +48,7 @@ so any agent can run the method, not just admire it.
 **One-liner for your agent:**
 
 ```text
-Install readme-anatomy for me: https://raw.githubusercontent.com/Rethymus/readme-anatomy/v0.6.0/INSTALL.md
+Install readme-anatomy for me: https://raw.githubusercontent.com/Rethymus/readme-anatomy/v0.7.0/INSTALL.md
 ```
 
 Prefer the one-liner. From a checkout:
@@ -80,8 +80,13 @@ copy the `readme-anatomy/` directory into your skills directory. Full details:
 - Keeps the repo's agent surfaces (AGENTS.md, llms.txt) consistent with the
   README instead of duplicating it.
 - Serves the whole toolchain over MCP stdio (`scripts/mcp_server.py` --
-  three tools, JSON-RPC 2.0, no SDK dependency) for hosts that prefer
+  four tools, JSON-RPC 2.0, no SDK dependency) for hosts that prefer
   native tool calls to shell round-trips.
+- Probes the evidence table READU-style (`scripts/claims_probe.py`): every
+  Where cell's path exists, anchors resolve, line numbers are in range,
+  commands are on PATH; `--run` executes them, checks exit codes, and compares
+  any recorded output contract (`cmd -> `expected text``) against real stdout.
+  It certifies anchorability, not truth.
 - Scaffolds a gates-clean README skeleton from the four answers
   (`scripts/readme_scaffold.py` — output passes the doctor by construction),
   and carries a real before/after pair plus copy-paste templates.
@@ -117,7 +122,8 @@ Rules cite anchors; anchors never carry the rules.
 | Rules carry source anchors | `references/research.md` | all URLs verified 2026-10-27; decay watchlist ranks what rots first |
 | Agent-surface discipline | `references/agent-surfaces.md` | grounded in the AGENTS.md standard and 2026 literature (instruction-file bloat; weaponized setup instructions) |
 | Bilingual self-dogfood | `README.md` + `README.zh-CN.md`, gate 5 | this repo consumes its own bilingual gates |
-| MCP surface | `scripts/mcp_server.py --selftest` | 9/9: child-process handshake, tool round-trips, protocol guards |
+| MCP surface | `scripts/mcp_server.py --selftest` | 10/10: child-process handshake, tool round-trips, protocol guards |
+| Evidence verification | `scripts/claims_probe.py` on both language READMEs | 16/16 fixtures; own tables: 0 FAIL, 0 WARN |
 | CI enforcement | `.github/workflows/readme-gates.yml` | selftest + gates on both language files on every push |
 | Method grounded in prior art | `references/research.md` (literature tables) | Prana 2018; README-popularity study 2022; Liu 2023; 2026 cluster (READU, instruction bloat, setup-instruction attacks) |
 

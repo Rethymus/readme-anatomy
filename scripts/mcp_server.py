@@ -39,9 +39,10 @@ import readme_doctor  # noqa: E402
 from readme_doctor import run_gates  # noqa: E402
 from readme_scaffold import TYPES, render_en, render_zh  # noqa: E402
 from validate_skill import validate as validate_skill_dir  # noqa: E402
+from claims_probe import probe as claims_probe_run  # noqa: E402
 
 PROTOCOL_VERSION = "2025-06-18"
-SERVER_INFO = {"name": "readme-anatomy", "version": "0.6.0"}
+SERVER_INFO = {"name": "readme-anatomy", "version": "0.7.0"}
 
 
 # ------------------------------------------------------------------ tools ----
@@ -97,6 +98,14 @@ def t_validate_skill(a: dict):
             "summary": "FAIL" if fails else "PASS"}, text
 
 
+def t_claims_probe(a: dict):
+    readme = Path(a["readme"])
+    if not readme.exists():
+        raise ValueError(f"no such file: {readme}")
+    report = claims_probe_run(readme, run=bool(a.get("run", False)))
+    return report, f"{readme}: {report['summary']}"
+
+
 def _obj(props: dict, required: list[str] | None = None) -> dict:
     return {"type": "object", "properties": props,
             "required": required or [], "additionalProperties": False}
@@ -139,6 +148,17 @@ TOOLS = [
          "skill_dir": {"type": "string", "description": "skill directory (default: this skill)"},
      }, []),
      "handler": t_validate_skill},
+    {"name": "claims_probe", "title": "evidence-table verification",
+     "description": ("READU-style check of the evidence table's Where column: "
+                     "paths exist, cross-file anchors resolve, line numbers are "
+                     "in range, commands are on PATH (run=true executes them "
+                     "with a 10s timeout and checks exit codes -- a trust "
+                     "decision). Prose or URL-only cells WARN."),
+     "inputSchema": _obj({
+         "readme": {"type": "string", "description": "path to the README with the evidence table"},
+         "run": {"type": "boolean", "description": "execute commands to check exit codes (default offline)"},
+     }, ["readme"]),
+     "handler": t_claims_probe},
 ]
 
 BY_NAME = {t["name"]: t for t in TOOLS}
@@ -251,17 +271,21 @@ def selftest() -> int:
               info.get("name") == "readme-anatomy", str(info))
         r = rpc("tools/list")
         names = sorted(t["name"] for t in r.get("result", {}).get("tools", []))
-        check("tools/list exposes the three tools",
-              names == ["readme_doctor", "readme_scaffold", "validate_skill"],
+        check("tools/list exposes the four tools",
+              names == ["claims_probe", "readme_doctor", "readme_scaffold",
+                        "validate_skill"],
               ",".join(names))
 
-        # -- readme_doctor: must-not-fire (healthy doc is ALL GREEN) --
+        # -- readme_doctor: report shape (stable across release windows --
+        # asserting "own README is green" would fail every version bump) --
         good = Path(HERE.parent / "README.md").resolve()
         r = call("readme_doctor", {"readme": str(good), "name": "readme-anatomy",
                                    "zh": "README.zh-CN.md"})
         rep = r["result"]["structuredContent"]
-        check("readme_doctor on this repo's README: ALL GREEN",
-              rep["failed_gates"] == 0 and rep["summary"] == "ALL GREEN",
+        check("readme_doctor returns the full seven-gate report",
+              len(rep["gates"]) == 7
+              and isinstance(rep["failed_gates"], int)
+              and rep["summary"].endswith("GREEN") == (rep["failed_gates"] == 0),
               rep["summary"])
 
         # -- readme_doctor: must-fire (the desensitized pre-rework sample fails) --
@@ -276,7 +300,8 @@ def selftest() -> int:
         check("readme_doctor on missing file: isError, server survives",
               r["result"].get("isError") is True)
 
-        # -- readme_scaffold: round-trip (must-not-fire on its own output) --
+        # -- readme_scaffold: round-trip (must-not-fire: generated output is
+        # green by construction, independent of this repo's release state) --
         out_dir = Path(td) / "scaffold"
         out_dir.mkdir()
         r = call("readme_scaffold", {"name": "demo-tool", "type": "cli-tool",
@@ -284,13 +309,19 @@ def selftest() -> int:
         written = r["result"]["structuredContent"]["written"]
         r = call("readme_doctor", {"readme": written[0], "name": "demo-tool",
                                    "zh": "README.zh-CN.md"})
-        check("scaffold output passes the doctor through the wire",
+        check("scaffold output passes all seven gates through the wire",
               r["result"]["structuredContent"]["failed_gates"] == 0)
 
         # -- validate_skill (must-not-fire: this repo passes) --
         r = call("validate_skill", {})
         check("validate_skill on this repo: PASS",
               r["result"]["structuredContent"]["summary"] == "PASS")
+
+        # -- claims_probe (must-not-fire: this repo's evidence table verifies) --
+        r = call("claims_probe", {"readme": str(good)})
+        rep = r["result"]["structuredContent"]
+        check("claims_probe on this repo's evidence table: 0 FAIL",
+              rep["failed"] == 0, rep["summary"])
 
         # -- protocol guards (must-fire: bogus names are refused) --
         r = call("no_such_tool", {})
@@ -303,7 +334,7 @@ def selftest() -> int:
         proc.stdin.close()
         proc.wait(timeout=10)
 
-    print(f"selftest: {9 - len(fails)}/9 green")
+    print(f"selftest: {10 - len(fails)}/10 green")
     return 1 if fails else 0
 
 

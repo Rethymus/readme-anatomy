@@ -60,13 +60,13 @@ the shell -- no SDK dependency, newline-delimited JSON-RPC 2.0 on stdio:
     "args": ["<skills-dir>/readme-anatomy/scripts/mcp_server.py"] } } }
 ```
 
-Exposes three tools: `readme_doctor` (seven gates, optional in-place fix),
+Exposes four tools: `readme_doctor` (seven gates, optional in-place fix),
 `readme_scaffold` (gates-clean skeleton), `validate_skill` (spec
-validation). Verify after configuring:
+validation), `claims_probe` (evidence-table verification). Verify after configuring:
 
 ```bash
 python <skills-dir>/readme-anatomy/scripts/mcp_server.py --selftest
-# expect: selftest 9/9 green
+# expect: selftest 10/10 green
 ```
 
 ## Uninstall
