@@ -53,7 +53,7 @@ LLM 辅助的 README 生成解决了空白页问题，却制造了真实性问�
 **给你的 agent 的一句话：**
 
 ```text
-Install readme-anatomy for me: https://raw.githubusercontent.com/Rethymus/readme-anatomy/v0.4.0/INSTALL.md
+Install readme-anatomy for me: https://raw.githubusercontent.com/Rethymus/readme-anatomy/v0.5.0/INSTALL.md
 ```
 
 优先用一句话。从检出版使用：
@@ -76,7 +76,8 @@ python scripts/readme_doctor.py --selftest   # 预期：全绿
   setext 标题；可选 `--live` 用 GET 探活；`--json` 输出机读报告供 CI 与
   agent 循环使用；坏锚点附带最近 slug 建议；跨表面一致性检查（安装
   一句话的仓库归属与 pin 对照 git remote 与最新 tag、SKILL.md 与包
-  版本对照 tag）。
+  版本对照 tag）。`--fix` 原地修复机械缺陷类——含按当前标题再生过期目录
+  （幂等：一致的目录字节不变）。
 - 每个任务先路由到五种模式之一（新建 / 重写 / 小改 / 只审计 / 翻译），
   小改动不承担全流程成本。
 - 让仓库的 agent 表面层（AGENTS.md、llms.txt）与 README 保持一致，

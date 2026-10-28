@@ -48,7 +48,7 @@ so any agent can run the method, not just admire it.
 **One-liner for your agent:**
 
 ```text
-Install readme-anatomy for me: https://raw.githubusercontent.com/Rethymus/readme-anatomy/v0.4.0/INSTALL.md
+Install readme-anatomy for me: https://raw.githubusercontent.com/Rethymus/readme-anatomy/v0.5.0/INSTALL.md
 ```
 
 Prefer the one-liner. From a checkout:
@@ -72,7 +72,9 @@ copy the `readme-anatomy/` directory into your skills directory. Full details:
   liveness using GET; `--json` report for CI and agent loops; broken anchors
   come back with nearest-slug suggestions; cross-surface consistency checked
   (one-liner origin and pin vs the git remote and latest tag, SKILL.md and
-  package versions vs the tag).
+  package versions vs the tag). `--fix` repairs the mechanical classes in
+  place -- including regenerating a stale table of contents from the current
+  headings (idempotent: a matching TOC is left byte-identical).
 - Routes every task through five modes (new / rewrite / small-edit /
   audit-only / translate) so small edits don't inherit full-ceremony cost.
 - Keeps the repo's agent surfaces (AGENTS.md, llms.txt) consistent with the

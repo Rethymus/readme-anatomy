@@ -76,7 +76,8 @@ def toc_and_path(name: str) -> tuple[str, str]:
     toc, path = [], []
     for i, sec in enumerate(SECTIONS, 1):
         title = f"{i}. {sec.format(name=name)}"
-        toc.append(f"{i}. [{title}](#{slug_for(title)})")
+        # link text unnumbered; the list carries the number (matches fix_toc's shape)
+        toc.append(f"{i}. [{sec.format(name=name)}](#{slug_for(title)})")
     for sec in ANCHOR_PATH:
         title = sec.format(name=name)
         path.append(f"[{title.split('. ', 1)[1]}](#{slug_for(title)})")
@@ -164,7 +165,8 @@ def render_zh(name: str, typ: str) -> str:
     def ztitle(i: int) -> str:
         return f"{i}. {ZH_SECTIONS[i].format(name=name)}"
 
-    links = [f"{i}. [{ztitle(i)}](#{slug_for(ztitle(i))})" for i in range(1, 11)]
+    links = [f"{i}. [{ZH_SECTIONS[i].format(name=name)}](#{slug_for(ztitle(i))})"
+             for i in range(1, 11)]
     path_zh = " · ".join(
         f"[{ztitle(i).split('. ', 1)[1]}](#{slug_for(ztitle(i))})"
         for i in (3, 2, 4, 7))

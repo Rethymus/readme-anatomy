@@ -112,23 +112,31 @@ def github_slug(heading: str, seen: Counter) -> str:
     return s
 
 
-def collect_headings(text: str) -> list[str]:
-    """ATX headings plus setext headings (text line directly followed by a
-    === or --- underline), both outside code fences."""
+def collect_heading_pairs(text: str) -> list[tuple[int, str, str]]:
+    """(level, title, slug) for ATX and setext headings, outside code fences."""
     seen: Counter = Counter()
-    slugs: list[str] = []
+    pairs: list[tuple[int, str, str]] = []
     lines = strip_code_fences(text).splitlines()
     for i, line in enumerate(lines):
         m = re.match(r"^(#{1,6})\s+(.+?)\s*#*\s*$", line)
         if m:
-            slugs.append(github_slug(m.group(2), seen))
+            pairs.append((len(m.group(1)), m.group(2).strip(),
+                          github_slug(m.group(2), seen)))
             continue
         if not line.strip():
             continue
         nxt = lines[i + 1].strip() if i + 1 < len(lines) else ""
-        if re.fullmatch(r"={2,}", nxt) or re.fullmatch(r"-{2,}", nxt):
-            slugs.append(github_slug(line, seen))
-    return slugs
+        if re.fullmatch(r"={2,}", nxt):
+            pairs.append((1, line.strip(), github_slug(line, seen)))
+        elif re.fullmatch(r"-{2,}", nxt):
+            pairs.append((2, line.strip(), github_slug(line, seen)))
+    return pairs
+
+
+def collect_headings(text: str) -> list[str]:
+    """Heading slugs in document order (GitHub slug rules; see
+    collect_heading_pairs for the leveled version)."""
+    return [slug for _, _, slug in collect_heading_pairs(text)]
 
 
 LINK_RE = re.compile(r"(?<!\!)\[[^\]]*\]\(([^)\s]+)(?:\s+\"[^\"]*\")?\)")
@@ -305,6 +313,51 @@ def fix_badge_styles(text: str) -> tuple[str, int]:
         return f"{m.group(1)}[{m.group(2)}]({styled})"
 
     return pat.sub(repl, text), changes
+
+
+TOC_LINE_RE = re.compile(r"^(\s*)\d+\.\s+\[[^\]]+\]\(#[^)]+\)\s*$")
+
+
+def fix_toc(text: str) -> tuple[str, bool]:
+    """Regenerate numbered-anchor TOC blocks from the current H2 headings
+    (gate 1's repair path). Conservative by contract: only rewrites blocks
+    that already are numbered anchor lists (>= 3 lines) -- plain prose lists
+    are never touched, no TOC is ever created from nothing, and a TOC that
+    already matches is returned byte-identical (idempotent)."""
+    entries = []
+    for i, (lvl, title, slug) in enumerate(
+            (p for p in collect_heading_pairs(text) if p[0] == 2), 1):
+        disp = re.sub(r"^\d+\.\s+", "", title)  # numbered-heading style: number lives in the list
+        entries.append(f"{i}. [{disp}](#{slug})")
+    changed = False
+    out: list[str] = []
+    lines = text.splitlines(keepends=True)
+    i = 0
+    while i < len(lines):
+        stripped_line = lines[i].rstrip("\r\n")
+        if not TOC_LINE_RE.match(stripped_line):
+            out.append(lines[i])
+            i += 1
+            continue
+        j = i
+        block = []
+        while j < len(lines) and TOC_LINE_RE.match(lines[j].rstrip("\r\n")):
+            block.append(lines[j].rstrip("\r\n"))
+            j += 1
+        if len(block) >= 3:
+            indent = TOC_LINE_RE.match(block[0]).group(1)
+            eol = "\r\n" if lines[i].endswith("\r\n") else "\n"
+            new_block = [indent + e for e in entries]
+            if new_block != block:
+                changed = True
+                out.extend(l + eol for l in new_block)
+            else:
+                out.extend(lines[i:j])
+            i = j
+            continue
+        out.append(lines[i])
+        i += 1
+    return "".join(out), changed
 
 
 def gate_spelling(text: str, ctx: dict) -> tuple[str, list[str], list[str]]:
@@ -528,6 +581,9 @@ def run_doctor(readme: Path, args) -> int:
     text = readme.read_text(encoding="utf-8")
     fixes: list[str] = []
     if args.fix:
+        text, toc_changed = fix_toc(text)
+        if toc_changed:
+            fixes.append("TOC regenerated from current H2 headings")
         text, n_badges = fix_badge_styles(text)
         if n_badges:
             fixes.append(f"{n_badges} badge URL(s) -> style=flat-square")
@@ -795,11 +851,43 @@ def selftest() -> int:
             ok = n == 0 and new == single
             return "noop" if ok else "other"
 
+        def _toc_regen_probe():
+            doc = ("# t\n\n1. [Old](#1-old)\n2. [Gone](#2-gone)\n3. [X](#3-x)\n\n"
+                   "## 1. Old\n## 2. New\n")
+            new, changed = fix_toc(doc)
+            ok = (changed and "](#2-new)" in new and "#2-gone" not in new
+                  and "[Old](#1-old)" in new)
+            return "regenerated" if ok else "other"
+
+        def _toc_idempotent_probe():
+            doc = "# t\n\n1. [A](#1-a)\n2. [B](#2-b)\n3. [C](#3-c)\n\n## 1. A\n## 2. B\n## 3. C\n"
+            new, changed = fix_toc(doc)
+            ok = (not changed and new == doc)
+            return "noop" if ok else "other"
+
+        def _toc_plain_list_probe():
+            doc = "1. apples\n2. pears\n3. plums\n"
+            new, changed = fix_toc(doc)
+            ok = (not changed and new == doc)
+            return "noop" if ok else "other"
+
+        def _toc_indent_probe():
+            doc = ("# t\n\n<details>\n  1. [A](#1-a)\n  2. [B](#2-b)\n  3. [C](#3-c)\n"
+                   "</details>\n\n## 1. A\n## 2. Renamed\n## 3. C\n")
+            new, changed = fix_toc(doc)
+            ok = (changed and "\n  2. [Renamed](#2-renamed)\n" in new
+                  and "\n  1. [A](#1-a)\n" in new and "<details>" in new)
+            return "regenerated" if ok else "other"
+
         for label, probe, expect in [
                 ("badge style autofix handles linked + bare without bracket damage",
                  _fix_badge_probe, "fixed-2"),
                 ("name drift fixer rewrites prose, spares inline code", _fix_name_probe, "fixed-2"),
-                ("name fixer no-ops on a single display surface", _fix_name_noop_probe, "noop")]:
+                ("name fixer no-ops on a single display surface", _fix_name_noop_probe, "noop"),
+                ("TOC regenerated from headings, dead anchors dropped", _toc_regen_probe, "regenerated"),
+                ("matching TOC is left byte-identical", _toc_idempotent_probe, "noop"),
+                ("plain numbered list (no anchors) never touched", _toc_plain_list_probe, "noop"),
+                ("indented TOC block keeps its indent and wrapper", _toc_indent_probe, "regenerated")]:
             got = probe()
             ok = got == expect
             if not ok:
@@ -817,7 +905,7 @@ def selftest() -> int:
             failed += 1
         print(f"  [{'PASS' if ok else 'FAIL'}] gate 7 selftest: version equality "
               f"is semantic (0.4 == v0.4.0, 0.4 != 0.4.1) (got {ver_probe})")
-    total = len(cases) + 7
+    total = len(cases) + 11
     print(f"selftest: {total - failed}/{total} green")
     return 1 if failed else 0
 
