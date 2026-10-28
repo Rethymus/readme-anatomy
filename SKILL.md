@@ -4,7 +4,7 @@ description: Rewrite and audit project READMEs with a measurement-first method �
 license: MIT
 compatibility: scripts/ need Python 3.10+ (stdlib only); gates run offline by default
 metadata:
-  version: "0.3.1"
+  version: "0.4"
   method-origin: "distilled from the glasspring README rework (2026-10-27)"
 ---
 
@@ -21,7 +21,7 @@ The method has three layers. Every task touches all three:
 |---|---|---|
 | L1 | Structure — header anatomy, section order, TOC | `references/anatomy.md` |
 | L2 | Semantic contract — claim tiers, admonitions, bilingual, install line | `references/claims-posture.md`, `references/bilingual.md`, `references/install-one-liner.md` |
-| L3 | Verification — six machine gates | `scripts/readme_doctor.py` |
+| L3 | Verification — seven machine gates | `scripts/readme_doctor.py` |
 
 ## Step 0 — Answer the Four Questions before writing anything
 
@@ -122,7 +122,7 @@ python scripts/readme_doctor.py <README.md> --name <canonical-name> [--zh README
 ```
 
 Stdlib-only, offline by default (`--live` adds real link liveness via GET).
-Six gates:
+Seven gates:
 
 1. **anchors** — internal links resolve under GitHub slug rules (including the
    leading hyphen an emoji prefix produces, and `-1` suffixes on duplicates)
@@ -133,6 +133,10 @@ Six gates:
    badges use `flat-square`
 5. **bilingual** — switch line bidirectional, zero stale cross-language refs
 6. **admonitions** — canonical `[!TYPE]` set, correct casing, no overuse
+7. **surfaces** — cross-surface consistency: the one-liner's repo must match
+   the git remote (impostor detection), its pin must not be stale, it must
+   not point at the README itself, and SKILL.md/package versions must match
+   the latest tag
 
 Fix every FAIL and rerun until exit code 0. Every WARN needs a stated reason
 to keep — write that reason into the report, do not silently ignore it.

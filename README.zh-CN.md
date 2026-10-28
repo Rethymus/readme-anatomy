@@ -45,7 +45,7 @@ LLM 辅助的 README 生成解决了空白页问题，却制造了真实性问�
 |---|---|
 | 产出可信的外观 | 强制主张分级；营销措辞直接删除 |
 | 按模板拼结构 | 按解剖学 + 项目类型侧重排结构 |
-| "看起来不错"就是标准 | `readme_doctor.py` 六项门禁必须退出码 0 |
+| "看起来不错"就是标准 | `readme_doctor.py` 七项门禁必须退出码 0 |
 | 双语靠事后补 | 第一天就声明 source of truth + 漂移策略 |
 
 ## 3. 安装
@@ -53,7 +53,7 @@ LLM 辅助的 README 生成解决了空白页问题，却制造了真实性问�
 **给你的 agent 的一句话：**
 
 ```text
-Install readme-anatomy for me: https://raw.githubusercontent.com/Rethymus/readme-anatomy/v0.3.0/INSTALL.md
+Install readme-anatomy for me: https://raw.githubusercontent.com/Rethymus/readme-anatomy/v0.4.0/INSTALL.md
 ```
 
 优先用一句话。从检出版使用：
@@ -72,9 +72,11 @@ python scripts/readme_doctor.py --selftest   # 预期：全绿
 - 通过四问路由（项目类型、读者的 30 秒、主张强度、双语策略）重写或审计
   README。
 - 把每条主张归入三个层级，并给出各层级的措辞范式。
-- 用六项离线机器门禁校验 README（仅标准库 Python）；解析引用式链接与
+- 用七项离线机器门禁校验 README（仅标准库 Python）；解析引用式链接与
   setext 标题；可选 `--live` 用 GET 探活；`--json` 输出机读报告供 CI 与
-  agent 循环使用；坏锚点附带最近 slug 建议。
+  agent 循环使用；坏锚点附带最近 slug 建议；跨表面一致性检查（安装
+  一句话的仓库归属与 pin 对照 git remote 与最新 tag、SKILL.md 与包
+  版本对照 tag）。
 - 每个任务先路由到五种模式之一（新建 / 重写 / 小改 / 只审计 / 翻译），
   小改动不承担全流程成本。
 - 让仓库的 agent 表面层（AGENTS.md、llms.txt）与 README 保持一致，

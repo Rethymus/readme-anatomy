@@ -16,7 +16,7 @@ machine gates in `scripts/`.
 ```bash
 git clone https://github.com/Rethymus/readme-anatomy.git
 cd readme-anatomy
-python scripts/readme_doctor.py --selftest   # expect: selftest 32/32 green
+python scripts/readme_doctor.py --selftest   # expect: selftest 37/37 green
 ```
 
 ## Install into an agent host
@@ -32,7 +32,7 @@ Then verify the copy in place:
 
 ```bash
 python <skills-dir>/readme-anatomy/scripts/readme_doctor.py --selftest
-# expect: selftest 32/32 green
+# expect: selftest 37/37 green
 ```
 
 File-copy success does **not** prove your host discovers the skill — run one

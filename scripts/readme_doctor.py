@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-readme_doctor.py -- six machine gates for README craft. (v0.2)
+readme_doctor.py -- seven machine gates for README craft. (v0.4)
 
 Gates
   1 anchors      internal anchor links resolve under GitHub slug rules
@@ -27,6 +27,16 @@ Gates
                  does not exist, or fragment-bearing cross-language links)
   6 admonitions  [!NOTE]/[!TIP]/[!IMPORTANT]/[!WARNING]/[!CAUTION] only,
                  canonical casing, no more than 2 of one type per document
+  7 surfaces     cross-surface consistency: the one-liner's owner/repo must
+                 match the git remote (impostor detection), its pinned tag
+                 must not be stale vs the latest tag (WARN), it must not
+                 point at README.md itself (circular), SKILL.md
+                 metadata.version must match the latest tag, and package
+                 metadata (pyproject.toml / package.json) version drift vs
+                 the tag is reported (WARN). Grounded in Shan 2026 (83.9%
+                 of multi-surface projects carry a core-field conflict) and
+                 in setup-instruction weaponization research; see
+                 references/agent-surfaces.md and references/research.md.
 
 Usage
   python scripts/readme_doctor.py README.md [--name canonical-name]
@@ -52,6 +62,7 @@ import argparse
 import difflib
 import json
 import re
+import subprocess
 import sys
 import tempfile
 import urllib.error
@@ -416,6 +427,59 @@ def gate_admonitions(text: str, ctx: dict) -> tuple[str, list[str], list[str]]:
     return ("fail" if problems else "pass"), problems, warnings
 
 
+RAW_URL_RE = re.compile(
+    r"https://raw\.githubusercontent\.com/([A-Za-z0-9_.-]+)/([A-Za-z0-9_.-]+)/"
+    r"([A-Za-z0-9_.-]+)/(\S+?)(?=[)\s<`]|$)")
+PKG_VERSION_RES = (
+    ("pyproject.toml", re.compile(r'^version\s*=\s*"([^"]+)"', re.MULTILINE)),
+    ("package.json", re.compile(r'"version"\s*:\s*"([^"]+)"')),
+)
+
+
+def gate_surfaces(text: str, ctx: dict) -> tuple[str, list[str], list[str]]:
+    base_dir: Path = ctx["base_dir"]
+    self_name: str = ctx["self_name"]
+    latest_tag: str | None = ctx.get("latest_tag")
+    origin: str | None = ctx.get("origin")  # "owner/repo" or None
+    problems, warnings = [], []
+    # scan RAW text: the one-liner lives in a fenced block by convention, so
+    # fence-stripping would blind exactly the line this gate exists to check
+    is_readme = self_name.lower().startswith("readme")
+
+    for m in RAW_URL_RE.finditer(text):
+        owner, repo, ref, path = m.groups()
+        if origin and f"{owner}/{repo}".lower() != origin.lower():
+            msg = (f"one-liner points at {owner}/{repo} but the git remote is "
+                   f"{origin} -- impostor or wrong repo")
+            (problems if is_readme else warnings).append(msg)
+        if path.strip("/").lower() in ("readme.md", "readme.zh-cn.md"):
+            problems.append(f"one-liner points at {path} -- circular; target a "
+                            "self-contained install document instead")
+        if (latest_tag and re.match(r"^v?\d", ref)
+                and ref.lstrip("v") != latest_tag.lstrip("v")):
+            warnings.append(f"one-liner pins {ref} while the latest tag is "
+                            f"{latest_tag} -- stale pin (deliberate pins: state why)")
+
+    if latest_tag:
+        skill_md = base_dir / "SKILL.md"
+        if skill_md.exists():
+            fm_text = skill_md.read_text(encoding="utf-8")
+            m = re.search(r"^metadata:\n(?:\s+[\w.-]+:\s*.*\n)*?\s+version:\s*"
+                          r'[\'"]?([^\'"\s]+)', fm_text, re.MULTILINE)
+            if m and m.group(1).lstrip("v") != latest_tag.lstrip("v"):
+                problems.append(f"SKILL.md metadata.version {m.group(1)} != "
+                                f"latest tag {latest_tag}")
+        for fname, pat in PKG_VERSION_RES:
+            f = base_dir / fname
+            if f.exists():
+                pm = pat.search(f.read_text(encoding="utf-8"))
+                if pm and pm.group(1).lstrip("v") != latest_tag.lstrip("v"):
+                    warnings.append(f"{fname} version {pm.group(1)} != latest "
+                                    f"tag {latest_tag} -- release-process drift")
+
+    return ("fail" if problems else "pass"), problems, warnings
+
+
 GATES = [
     ("anchors", "internal anchors resolve (GitHub slug rules, setext too)", gate_anchors),
     ("links", "link targets exist; reference links defined (GET when --live)", gate_links),
@@ -423,10 +487,27 @@ GATES = [
     ("badges", "<= 4 badges, meaningful hrefs, flat-square", gate_badges),
     ("bilingual", "bidirectional switch line, zero stale cross-refs", gate_bilingual),
     ("admonitions", "canonical [!TYPE] set, correct casing", gate_admonitions),
+    ("surfaces", "one-liner origin/pin, skill version vs tag, package drift", gate_surfaces),
 ]
 
 
 # ------------------------------------------------------------------ main ----
+
+def _parse_origin(url: str | None) -> str | None:
+    if not url:
+        return None
+    m = re.search(r"github\.com[:/]([^/\s]+)/([^/\s]+?)(?:\.git)?$", url.strip())
+    return f"{m.group(1)}/{m.group(2)}" if m else None
+
+
+def _git(base_dir: Path, args: list[str]) -> str | None:
+    try:
+        r = subprocess.run(["git", "-C", str(base_dir)] + args,
+                           capture_output=True, text=True, timeout=10)
+        return r.stdout.strip() if r.returncode == 0 else None
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+
 
 def run_doctor(readme: Path, args) -> int:
     text = readme.read_text(encoding="utf-8")
@@ -453,6 +534,8 @@ def run_doctor(readme: Path, args) -> int:
         "zh": args.zh,
         "live": args.live,
         "allow": set(args.allow or []),
+        "latest_tag": _git(readme.parent, ["describe", "--abbrev=0", "--tags"]),
+        "origin": _parse_origin(_git(readme.parent, ["remote", "get-url", "origin"])),
     }
     fails = 0
     report = {"file": str(readme), "name": args.name, "live": bool(args.live),
@@ -560,6 +643,42 @@ def selftest() -> int:
     cases.append(("6", "must-not-fire: canonical IMPORTANT", "pass",
                   gate_admonitions, "> [!IMPORTANT]\nboundary\n", {}))
 
+    # gate 7 surfaces (git facts injected via ctx -- fixtures stay hermetic)
+    _one = "Install t for me: https://raw.githubusercontent.com/acme/t/{r}/INSTALL.md\n"
+    _base7 = {"self_name": "README.md", "origin": "acme/t", "base_dir": Path(".")}
+    cases.append(("7", "must-fire: one-liner points at another repo (impostor)", "fail",
+                  gate_surfaces, _one.format(r="v1.0.0"),
+                  {**_base7, "latest_tag": "v1.0.0", "origin": "someone/else"}))
+    cases.append(("7", "must-fire: one-liner targets README.md (circular)", "fail",
+                  gate_surfaces, _one.replace("INSTALL.md", "README.md").format(r="v1.0.0"),
+                  {**_base7, "latest_tag": "v1.0.0"}))
+
+    def _surface_file_cases(tmp: Path):
+        (tmp / "SKILL.md").write_text(
+            "---\nname: t\ndescription: d\nmetadata:\n  version: \"1.0.0\"\n---\n# t\n",
+            encoding="utf-8")
+        (tmp / "pyproject.toml").write_text(
+            '[project]\nname = "t"\nversion = "1.0.0"\n', encoding="utf-8")
+        return [
+            ("7", "must-not-fire: all surfaces agree", "pass", gate_surfaces,
+             _one.format(r="v1.0.0"),
+             {"self_name": "README.md", "base_dir": tmp, "origin": "acme/t",
+              "latest_tag": "v1.0.0"}),
+            ("7", "must-fire: SKILL.md version != latest tag", "fail", gate_surfaces,
+             _one.format(r="v1.0.0"),
+             {"self_name": "README.md", "base_dir": tmp, "origin": "acme/t",
+              "latest_tag": "v1.1.0"}),
+        ]
+
+    def _stale_pin_probe():
+        with tempfile.TemporaryDirectory() as pd:  # neutral dir: no SKILL/pkg files
+            status, _, warnings = gate_surfaces(
+                _one.format(r="v1.0.0"),
+                {"self_name": "README.md", "base_dir": Path(pd), "origin": "acme/t",
+                 "latest_tag": "v1.1.0"})
+        ok = status == "pass" and any("stale pin" in w for w in warnings)
+        return "warn-stale" if ok else "other"
+
     failed = 0
     with tempfile.TemporaryDirectory() as td:
         tmp = Path(td)
@@ -610,6 +729,7 @@ def selftest() -> int:
 
         cases += _link_file_cases()
         cases += _zh_cases()
+        cases += _surface_file_cases(tmp)
         for gate, label, expect, fn, text, ctx in cases:
             got = _run_one(fn, text, ctx)
             ok = (got == expect)
@@ -665,7 +785,13 @@ def selftest() -> int:
             if not ok:
                 failed += 1
             print(f"  [{'PASS' if ok else 'FAIL'}] --fix selftest: {label} (got {got})")
-    total = len(cases) + 5
+        stale_probe = _stale_pin_probe()
+        ok = stale_probe == "warn-stale"
+        if not ok:
+            failed += 1
+        print(f"  [{'PASS' if ok else 'FAIL'}] gate 7 selftest: stale one-liner pin "
+              f"warns without failing (got {stale_probe})")
+    total = len(cases) + 6
     print(f"selftest: {total - failed}/{total} green")
     return 1 if failed else 0
 

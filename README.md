@@ -40,7 +40,7 @@ so any agent can run the method, not just admire it.
 |---|---|
 | Produces credible appearance | Forces claim tiers; marketing phrasing is deleted |
 | Structure by template | Structure by anatomy + per-project-type emphasis |
-| "Looks good" is the bar | `readme_doctor.py` six gates must exit 0 |
+| "Looks good" is the bar | `readme_doctor.py` seven gates must exit 0 |
 | Bilingual by afterthought | Source-of-truth declaration + drift policy on day one |
 
 ## 3. Install
@@ -48,7 +48,7 @@ so any agent can run the method, not just admire it.
 **One-liner for your agent:**
 
 ```text
-Install readme-anatomy for me: https://raw.githubusercontent.com/Rethymus/readme-anatomy/v0.3.0/INSTALL.md
+Install readme-anatomy for me: https://raw.githubusercontent.com/Rethymus/readme-anatomy/v0.4.0/INSTALL.md
 ```
 
 Prefer the one-liner. From a checkout:
@@ -67,10 +67,12 @@ copy the `readme-anatomy/` directory into your skills directory. Full details:
 - Rewrites or audits a README through a four-question routing (project type,
   reader's 30 seconds, claim strength, bilingual policy).
 - Classifies every claim into three tiers with wording patterns for each.
-- Validates a README with six offline machine gates (stdlib-only Python);
+- Validates a README with seven offline machine gates (stdlib-only Python);
   reference-style links and setext headings parsed; optional `--live` link
   liveness using GET; `--json` report for CI and agent loops; broken anchors
-  come back with nearest-slug suggestions.
+  come back with nearest-slug suggestions; cross-surface consistency checked
+  (one-liner origin and pin vs the git remote and latest tag, SKILL.md and
+  package versions vs the tag).
 - Routes every task through five modes (new / rewrite / small-edit /
   audit-only / translate) so small edits don't inherit full-ceremony cost.
 - Keeps the repo's agent surfaces (AGENTS.md, llms.txt) consistent with the
@@ -105,7 +107,7 @@ Rules cite anchors; anchors never carry the rules.
 
 | Claim | Where | Notes |
 |---|---|---|
-| Six gates with dual-anchor selftest | `scripts/readme_doctor.py`, `--selftest` | each gate ships a must-fire and a must-not-fire fixture |
+| Seven gates with dual-anchor selftest | `scripts/readme_doctor.py`, `--selftest` | each gate ships a must-fire and a must-not-fire fixture |
 | Real rewrite pair, desensitized | `assets/before.md`, `assets/after.md` | origin project's pre-rework snapshot vs the rework (header/TOC/FAQ/one-liner); provenance in `evals/ledger.md` |
 | Rules carry source anchors | `references/research.md` | all URLs verified 2026-10-27; decay watchlist ranks what rots first |
 | Agent-surface discipline | `references/agent-surfaces.md` | grounded in the AGENTS.md standard and 2026 literature (instruction-file bloat; weaponized setup instructions) |
