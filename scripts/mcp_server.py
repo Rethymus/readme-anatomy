@@ -42,7 +42,7 @@ from validate_skill import validate as validate_skill_dir  # noqa: E402
 from claims_probe import probe as claims_probe_run  # noqa: E402
 
 PROTOCOL_VERSION = "2025-06-18"
-SERVER_INFO = {"name": "readme-anatomy", "version": "0.7.0"}
+SERVER_INFO = {"name": "readme-anatomy", "version": "0.9.0"}
 
 
 # ------------------------------------------------------------------ tools ----
@@ -54,7 +54,7 @@ def t_readme_doctor(a: dict):
     report = run_gates(
         readme, name=a.get("name"), zh=a.get("zh"),
         live=bool(a.get("live", False)), allow=a.get("allow", []),
-        fix=bool(a.get("fix", False)))
+        fix=bool(a.get("fix", False)), dry_run=bool(a.get("dry_run", False)))
     text = (f"{readme}: {report['summary']}"
             + (f"; fixed: {'; '.join(report['fixes'])}" if report["fixes"] else ""))
     return report, text
@@ -124,6 +124,7 @@ TOOLS = [
          "zh": {"type": "string", "description": "companion translation, e.g. README.zh-CN.md"},
          "live": {"type": "boolean", "description": "GET-probe external links (default offline)"},
          "fix": {"type": "boolean", "description": "apply mechanical fixes in place"},
+         "dry_run": {"type": "boolean", "description": "compute the fix set, return a unified diff, never write"},
          "allow": {"type": "array", "items": {"type": "string"},
                    "description": "extra whitelisted surface forms of the name"},
      }, ["readme"]),
@@ -323,6 +324,19 @@ def selftest() -> int:
         check("claims_probe on this repo's evidence table: 0 FAIL",
               rep["failed"] == 0, rep["summary"])
 
+        # -- dry_run preview over the wire (must-not-fire: never writes) --
+        scratch = Path(td) / "scratch"
+        scratch.mkdir()
+        scratch_file = scratch / "README.md"
+        scratch_file.write_text("# Lumina CLI\n\nLuminaCLI drift.\n", encoding="utf-8")
+        before = scratch_file.read_text(encoding="utf-8")
+        r = call("readme_doctor", {"readme": str(scratch_file), "name": "lumina-cli",
+                                   "dry_run": True})
+        rep = r["result"]["structuredContent"]
+        check("dry_run returns a diff and leaves the file untouched",
+              bool(rep.get("fixes")) and "-LuminaCLI" in (rep.get("diff") or "")
+              and scratch_file.read_text(encoding="utf-8") == before)
+
         # -- protocol guards (must-fire: bogus names are refused) --
         r = call("no_such_tool", {})
         check("unknown tool -> JSON-RPC -32602",
@@ -334,7 +348,7 @@ def selftest() -> int:
         proc.stdin.close()
         proc.wait(timeout=10)
 
-    print(f"selftest: {10 - len(fails)}/10 green")
+    print(f"selftest: {11 - len(fails)}/11 green")
     return 1 if fails else 0
 
 

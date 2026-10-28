@@ -4,7 +4,7 @@ description: Rewrite and audit project READMEs with a measurement-first method �
 license: MIT
 compatibility: scripts/ need Python 3.10+ (stdlib only); gates run offline by default
 metadata:
-  version: "0.8"
+  version: "0.9"
   method-origin: "distilled from the glasspring README rework (2026-10-27)"
 ---
 
@@ -157,7 +157,7 @@ Seven gates:
    not point at the README itself, and SKILL.md/package versions must match
    the latest tag
 
-Fix every FAIL and rerun until exit code 0 (`--fix` repairs the mechanical classes in place: TOC regeneration from current headings, badge flat-square style, drifted prose name surfaces). Every WARN needs a stated reason
+Fix every FAIL and rerun until exit code 0 (`--fix` repairs the mechanical classes in place: TOC regeneration from current headings, badge flat-square style, drifted prose name surfaces; `--dry-run` previews the same set as a diff without writing). Every WARN needs a stated reason
 to keep — write that reason into the report, do not silently ignore it.
 
 ## Step 7 — Report to the author

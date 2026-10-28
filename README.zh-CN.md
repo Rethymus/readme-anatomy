@@ -53,7 +53,7 @@ LLM 辅助的 README 生成解决了空白页问题，却制造了真实性问�
 **给你的 agent 的一句话：**
 
 ```text
-Install readme-anatomy for me: https://raw.githubusercontent.com/Rethymus/readme-anatomy/v0.8.0/INSTALL.md
+Install readme-anatomy for me: https://raw.githubusercontent.com/Rethymus/readme-anatomy/v0.9.0/INSTALL.md
 ```
 
 优先用一句话。从检出版使用：
@@ -77,7 +77,7 @@ python scripts/readme_doctor.py --selftest   # 预期：全绿
   agent 循环使用；坏锚点附带最近 slug 建议；双语证据表做行集与锚集比对、跨表面一致性检查（安装
   一句话的仓库归属与 pin 对照 git remote 与最新 tag、SKILL.md 与包
   版本对照 tag）。`--fix` 原地修复机械缺陷类——含按当前标题再生过期目录
-  （幂等：一致的目录字节不变）。
+  （幂等：一致的目录字节不变）。`--dry-run` 以 unified diff 预览同一修复集而不落盘。
 - 每个任务先路由到五种模式之一（新建 / 重写 / 小改 / 只审计 / 翻译），
   小改动不承担全流程成本。
 - 让仓库的 agent 表面层（AGENTS.md、llms.txt）与 README 保持一致，
@@ -112,8 +112,8 @@ python scripts/readme_doctor.py --selftest   # 预期：全绿
 
 | 主张 | 在哪 | 备注 |
 |---|---|---|
-| 七门禁自测全绿 | `python scripts/readme_doctor.py --selftest` -> `45/45 green` | 数量即主张：增删 fixture 不同步更新此行，CI 变红 |
-| MCP 表面全绿 | `python scripts/mcp_server.py --selftest` -> `10/10 green` | 子进程握手、工具往返、协议守卫 |
+| 七门禁自测全绿 | `python scripts/readme_doctor.py --selftest` -> `48/48 green` | 数量即主张：增删 fixture 不同步更新此行，CI 变红 |
+| MCP 表面全绿 | `python scripts/mcp_server.py --selftest` -> `11/11 green` | 子进程握手、工具往返、协议守卫 |
 | 规范校验全绿 | `python scripts/validate_skill.py --selftest` -> `11/11 green` | agentskills.io frontmatter + 行数预算 |
 | 证据探针全绿 | `python scripts/claims_probe.py --selftest` -> `17/17 green` | 双锚点 fixture |
 | 脚手架产物过门禁 | `python scripts/readme_scaffold.py --selftest` -> `passes the gates by construction` | 双语两文件 |

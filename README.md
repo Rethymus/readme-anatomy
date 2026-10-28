@@ -48,7 +48,7 @@ so any agent can run the method, not just admire it.
 **One-liner for your agent:**
 
 ```text
-Install readme-anatomy for me: https://raw.githubusercontent.com/Rethymus/readme-anatomy/v0.8.0/INSTALL.md
+Install readme-anatomy for me: https://raw.githubusercontent.com/Rethymus/readme-anatomy/v0.9.0/INSTALL.md
 ```
 
 Prefer the one-liner. From a checkout:
@@ -74,7 +74,7 @@ copy the `readme-anatomy/` directory into your skills directory. Full details:
   (one-liner origin and pin vs the git remote and latest tag, SKILL.md and
   package versions vs the tag). `--fix` repairs the mechanical classes in
   place -- including regenerating a stale table of contents from the current
-  headings (idempotent: a matching TOC is left byte-identical).
+  headings (idempotent: a matching TOC is left byte-identical). `--dry-run` previews the identical repair set as a unified diff without writing.
 - Routes every task through five modes (new / rewrite / small-edit /
   audit-only / translate) so small edits don't inherit full-ceremony cost.
 - Keeps the repo's agent surfaces (AGENTS.md, llms.txt) consistent with the
@@ -117,8 +117,8 @@ Rules cite anchors; anchors never carry the rules.
 
 | Claim | Where | Notes |
 |---|---|---|
-| Seven gates, selftest all green | `python scripts/readme_doctor.py --selftest` -> `45/45 green` | the count is a claim: adding fixtures without updating this row turns CI red |
-| MCP surface green | `python scripts/mcp_server.py --selftest` -> `10/10 green` | child-process handshake, tool round-trips, protocol guards |
+| Seven gates, selftest all green | `python scripts/readme_doctor.py --selftest` -> `48/48 green` | the count is a claim: adding fixtures without updating this row turns CI red |
+| MCP surface green | `python scripts/mcp_server.py --selftest` -> `11/11 green` | child-process handshake, tool round-trips, protocol guards |
 | Skill spec validation green | `python scripts/validate_skill.py --selftest` -> `11/11 green` | agentskills.io frontmatter + body budget |
 | Claims probe green | `python scripts/claims_probe.py --selftest` -> `17/17 green` | dual-anchor fixtures |
 | Scaffold output passes the gates | `python scripts/readme_scaffold.py --selftest` -> `passes the gates by construction` | both language files |

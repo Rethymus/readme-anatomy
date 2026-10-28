@@ -610,25 +610,38 @@ def _git(base_dir: Path, args: list[str]) -> str | None:
 
 
 def run_gates(readme: Path, *, name: str | None = None, zh: str | None = None,
-              live: bool = False, allow: list[str] | tuple = (), fix: bool = False) -> dict:
+              live: bool = False, allow: list[str] | tuple = (), fix: bool = False,
+              dry_run: bool = False) -> dict:
     """Programmatic entry (used by the CLI and by scripts/mcp_server.py):
     run the gates, optionally apply mechanical fixes in place, and return the
-    structured report dict (fixes, per-gate results, failed_gates)."""
+    structured report dict (fixes, per-gate results, failed_gates).
+
+    fix=True applies the mechanical repair set and writes the file.
+    dry_run=True computes the identical repair set but never writes; the
+    gates run against the ORIGINAL text (the file on disk is what the report
+    describes) and the would-be changes ship as report["diff"]."""
     text = readme.read_text(encoding="utf-8")
     fixes: list[str] = []
-    if fix:
-        text, toc_changed = fix_toc(text)
+    diff_text: str | None = None
+    if fix or dry_run:
+        fixed = text
+        fixed, toc_changed = fix_toc(fixed)
         if toc_changed:
             fixes.append("TOC regenerated from current H2 headings")
-        text, n_badges = fix_badge_styles(text)
+        fixed, n_badges = fix_badge_styles(fixed)
         if n_badges:
             fixes.append(f"{n_badges} badge URL(s) -> style=flat-square")
         if name:
-            text, n_names = fix_name_surfaces(text, name, set(allow or []))
+            fixed, n_names = fix_name_surfaces(fixed, name, set(allow or []))
             if n_names:
                 fixes.append(f"{n_names} drifted name occurrence(s) -> {name!r}")
-        if fixes:
-            readme.write_text(text, encoding="utf-8")
+        if fixes and fixed != text:
+            diff_lines = list(difflib.unified_diff(
+                text.splitlines(keepends=True), fixed.splitlines(keepends=True),
+                fromfile=f"{readme} (on disk)", tofile=f"{readme} (after fix)"))
+            diff_text = "".join(diff_lines)
+        if fixes and fix and not dry_run:
+            readme.write_text(fixed, encoding="utf-8")
     ctx = {
         "base_dir": readme.parent,
         "self_name": readme.name,
@@ -641,7 +654,7 @@ def run_gates(readme: Path, *, name: str | None = None, zh: str | None = None,
     }
     fails = 0
     report = {"file": str(readme), "name": name, "live": bool(live),
-              "fixes": fixes, "gates": []}
+              "fixes": fixes, "diff": diff_text, "gates": []}
     for i, (gname, desc, fn) in enumerate(GATES, 1):
         status, details, warnings = fn(text, ctx)
         if status == "fail":
@@ -655,11 +668,14 @@ def run_gates(readme: Path, *, name: str | None = None, zh: str | None = None,
 
 def run_doctor(readme: Path, args) -> int:
     report = run_gates(readme, name=args.name, zh=args.zh, live=args.live,
-                       allow=args.allow, fix=args.fix)
-    if args.fix:
+                       allow=args.allow, fix=args.fix, dry_run=args.dry_run)
+    if args.fix or args.dry_run:
         if report["fixes"]:
             for f in report["fixes"]:
-                print(f"  fixed: {f}")
+                print(f"  {'would fix' if args.dry_run else 'fixed'}: {f}")
+            if args.dry_run and report.get("diff"):
+                sys.stdout.write(report["diff"] if report["diff"].endswith("\n")
+                                 else report["diff"] + "\n")
         else:
             print("  fix: nothing mechanical to repair")
     print(f"readme_doctor: {readme}"
@@ -954,11 +970,49 @@ def selftest() -> int:
                   and "\n  1. [A](#1-a)\n" in new and "<details>" in new)
             return "regenerated" if ok else "other"
 
+        def _dryrun_probe():
+            import tempfile as _tf
+            with _tf.TemporaryDirectory() as pd:
+                f = Path(pd) / "README.md"
+                broken = ("# Lumina CLI\n\nLuminaCLI and Lumina CLI drift; "
+                          "`agent_comparability` stays.\n\n"
+                          "[![L](https://img.shields.io/badge/L-1)](LICENSE)\n")
+                f.write_text(broken, encoding="utf-8")
+                rep = run_gates(f, name="lumina-cli", dry_run=True)
+                unchanged = f.read_text(encoding="utf-8") == broken
+                ok = (unchanged and rep["fixes"] and rep.get("diff")
+                      and "-LuminaCLI" in rep["diff"] and "+lumina-cli" in rep["diff"])
+            return "preview-only" if ok else "other"
+
+        def _fix_writes_probe():
+            import tempfile as _tf
+            with _tf.TemporaryDirectory() as pd:
+                f = Path(pd) / "README.md"
+                f.write_text("# Lumina CLI\n\nLuminaCLI drift.\n", encoding="utf-8")
+                rep = run_gates(f, name="lumina-cli", fix=True)
+                changed = f.read_text(encoding="utf-8") == "# lumina-cli\n\nlumina-cli drift.\n"
+                ok = (changed and rep["fixes"])
+            return "applied" if ok else "other"
+
+        def _clean_dryrun_probe():
+            import tempfile as _tf
+            with _tf.TemporaryDirectory() as pd:
+                f = Path(pd) / "README.md"
+                clean = "# t\n\nnothing to fix here\n"
+                f.write_text(clean, encoding="utf-8")
+                rep = run_gates(f, name="t", dry_run=True)
+                ok = (not rep["fixes"] and rep.get("diff") is None
+                      and f.read_text(encoding="utf-8") == clean)
+            return "noop" if ok else "other"
+
         for label, probe, expect in [
                 ("badge style autofix handles linked + bare without bracket damage",
                  _fix_badge_probe, "fixed-2"),
                 ("name drift fixer rewrites prose, spares inline code", _fix_name_probe, "fixed-2"),
                 ("name fixer no-ops on a single display surface", _fix_name_noop_probe, "noop"),
+                ("--dry-run previews a diff and leaves the file byte-identical", _dryrun_probe, "preview-only"),
+                ("--fix writes the repair set to disk", _fix_writes_probe, "applied"),
+                ("--dry-run on a clean file is a no-op with no diff", _clean_dryrun_probe, "noop"),
                 ("TOC regenerated from headings, dead anchors dropped", _toc_regen_probe, "regenerated"),
                 ("matching TOC is left byte-identical", _toc_idempotent_probe, "noop"),
                 ("plain numbered list (no anchors) never touched", _toc_plain_list_probe, "noop"),
@@ -980,7 +1034,7 @@ def selftest() -> int:
             failed += 1
         print(f"  [{'PASS' if ok else 'FAIL'}] gate 7 selftest: version equality "
               f"is semantic (0.4 == v0.4.0, 0.4 != 0.4.1) (got {ver_probe})")
-    total = len(cases) + 11
+    total = len(cases) + 14
     print(f"selftest: {total - failed}/{total} green")
     return 1 if failed else 0
 
@@ -1000,6 +1054,10 @@ def main(argv=None) -> int:
     ap.add_argument("--fix", action="store_true",
                     help="repair mechanical defect classes in place (badge style, "
                          "drifted prose name surfaces); judgment repairs stay manual")
+    ap.add_argument("--dry-run", action="store_true",
+                    help="with --fix semantics: compute the identical repair set, "
+                         "print a unified diff, and never write the file (gates "
+                         "still report the on-disk text)")
     ap.add_argument("--selftest", action="store_true",
                     help="run the built-in dual-anchor fixtures and exit")
     args = ap.parse_args(argv)
