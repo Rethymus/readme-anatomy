@@ -53,7 +53,7 @@ LLM 辅助的 README 生成解决了空白页问题，却制造了真实性问�
 **给你的 agent 的一句话：**
 
 ```text
-Install readme-anatomy for me: https://raw.githubusercontent.com/Rethymus/readme-anatomy/v0.7.0/INSTALL.md
+Install readme-anatomy for me: https://raw.githubusercontent.com/Rethymus/readme-anatomy/v0.7.1/INSTALL.md
 ```
 
 优先用一句话。从检出版使用：
@@ -112,13 +112,17 @@ python scripts/readme_doctor.py --selftest   # 预期：全绿
 
 | 主张 | 在哪 | 备注 |
 |---|---|---|
-| 六门禁 + 双锚点自测 | `scripts/readme_doctor.py` 的 `--selftest` | 27 个 fixture：每门禁都有命中与防误报两用例 |
-| 真实重写前后对（脱敏） | `assets/before.md`、`assets/after.md` | 起源项目重构前快照 vs 重写版（头部/目录/FAQ/一句话安装）；出处见 `evals/ledger.md` |
-| 规则带出处锚点 | `references/research.md` | 全部 URL 已于 2026-10-27 验证；衰变观察哨列出最先腐烂之处 |
-| agent 表面层纪律 | `references/agent-surfaces.md` | 基于 AGENTS.md 标准与 2026 文献（指令文件膨胀；setup 指令武器化） |
+| 七门禁自测全绿 | `python scripts/readme_doctor.py --selftest` -> `42/42 green` | 数量即主张：增删 fixture 不同步更新此行，CI 变红 |
+| MCP 表面全绿 | `python scripts/mcp_server.py --selftest` -> `10/10 green` | 子进程握手、工具往返、协议守卫 |
+| 规范校验全绿 | `python scripts/validate_skill.py --selftest` -> `11/11 green` | agentskills.io frontmatter + 行数预算 |
+| 证据探针全绿 | `python scripts/claims_probe.py --selftest` -> `16/16 green` | 双锚点 fixture |
+| 脚手架产物过门禁 | `python scripts/readme_scaffold.py --selftest` -> `passes the gates by construction` | 双语两文件 |
+| 真实重写前后对（脱敏） | `assets/before.md`、`assets/after.md` | 起源项目重构前快照 vs 重写版；出处见 `evals/ledger.md` |
+| 规则带出处锚点 | `references/research.md` | URL 已于 2026-10-27 验证；2026 数字细节标注未确认；衰变观察哨列出最先腐烂之处 |
+| agent 表面层纪律 | `references/agent-surfaces.md` | AGENTS.md 标准 + 2026 文献（方向性） |
 | 双语自食其果 | `README.md` + `README.zh-CN.md`，gate 5 | 本仓库消费自己的双语门禁 |
-| CI 强制执行 | `.github/workflows/readme-gates.yml` | 每次 push 跑自测 + 双语两文件门禁 |
-| 方法有先行文献 | `references/research.md`（文献表） | Prana 2018；README 热度实证 2022；Liu 2023；2026 文献簇（READU、指令膨胀、setup 攻击面） |
+| CI 强制执行 | `.github/workflows/readme-gates.yml` | 每次 push 跑全部自测 + 双语门禁 + claims `--run` |
+| 方法有先行文献 | `references/research.md`（文献表） | Prana 2018；热度实证 2022；Liu 2023（支撑裁剪上下文，不支撑 ≤3 数字）；2026 文献簇 |
 
 ## 8. 常见问题
 

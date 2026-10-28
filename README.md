@@ -48,7 +48,7 @@ so any agent can run the method, not just admire it.
 **One-liner for your agent:**
 
 ```text
-Install readme-anatomy for me: https://raw.githubusercontent.com/Rethymus/readme-anatomy/v0.7.0/INSTALL.md
+Install readme-anatomy for me: https://raw.githubusercontent.com/Rethymus/readme-anatomy/v0.7.1/INSTALL.md
 ```
 
 Prefer the one-liner. From a checkout:
@@ -117,15 +117,17 @@ Rules cite anchors; anchors never carry the rules.
 
 | Claim | Where | Notes |
 |---|---|---|
-| Seven gates with dual-anchor selftest | `scripts/readme_doctor.py`, `--selftest` | each gate ships a must-fire and a must-not-fire fixture |
-| Real rewrite pair, desensitized | `assets/before.md`, `assets/after.md` | origin project's pre-rework snapshot vs the rework (header/TOC/FAQ/one-liner); provenance in `evals/ledger.md` |
-| Rules carry source anchors | `references/research.md` | all URLs verified 2026-10-27; decay watchlist ranks what rots first |
-| Agent-surface discipline | `references/agent-surfaces.md` | grounded in the AGENTS.md standard and 2026 literature (instruction-file bloat; weaponized setup instructions) |
+| Seven gates, selftest all green | `python scripts/readme_doctor.py --selftest` -> `42/42 green` | the count is a claim: adding fixtures without updating this row turns CI red |
+| MCP surface green | `python scripts/mcp_server.py --selftest` -> `10/10 green` | child-process handshake, tool round-trips, protocol guards |
+| Skill spec validation green | `python scripts/validate_skill.py --selftest` -> `11/11 green` | agentskills.io frontmatter + body budget |
+| Claims probe green | `python scripts/claims_probe.py --selftest` -> `16/16 green` | dual-anchor fixtures |
+| Scaffold output passes the gates | `python scripts/readme_scaffold.py --selftest` -> `passes the gates by construction` | both language files |
+| Real rewrite pair, desensitized | `assets/before.md`, `assets/after.md` | origin project's pre-rework snapshot vs the rework; provenance in `evals/ledger.md` |
+| Rules carry source anchors | `references/research.md` | URLs verified 2026-10-27; 2026 numeric specifics marked unconfirmed; decay watchlist ranks what rots first |
+| Agent-surface discipline | `references/agent-surfaces.md` | AGENTS.md standard + 2026 literature (directional) |
 | Bilingual self-dogfood | `README.md` + `README.zh-CN.md`, gate 5 | this repo consumes its own bilingual gates |
-| MCP surface | `scripts/mcp_server.py --selftest` | 10/10: child-process handshake, tool round-trips, protocol guards |
-| Evidence verification | `scripts/claims_probe.py` on both language READMEs | 16/16 fixtures; own tables: 0 FAIL, 0 WARN |
-| CI enforcement | `.github/workflows/readme-gates.yml` | selftest + gates on both language files on every push |
-| Method grounded in prior art | `references/research.md` (literature tables) | Prana 2018; README-popularity study 2022; Liu 2023; 2026 cluster (READU, instruction bloat, setup-instruction attacks) |
+| CI enforcement | `.github/workflows/readme-gates.yml` | selftests + bilingual gates + claims probe `--run` on every push |
+| Method grounded in prior art | `references/research.md` (literature tables) | Prana 2018; README-popularity 2022; Liu 2023 (grounds trimming, not the ≤3 number); 2026 cluster |
 
 ## 8. FAQ
 
