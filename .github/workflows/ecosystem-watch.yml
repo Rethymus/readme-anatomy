@@ -1,0 +1,73 @@
+name: ecosystem-watch
+
+# Monthly automated probe of research.md's decay-watchlist item 2 (ecosystem
+# whitespace): scans the flagship skill frameworks' skill directories via the
+# GitHub API for any README-craft skill. A hit FAILs the job -- that red
+# light means this skill's differentiation claim has expired and the
+# positioning needs rework, not that anything is broken. Known limitation:
+# top-level entry names only (nested fixture dirs are out of scope by
+# design); a skill named to dodge /readme/ would slip past -- acceptable for
+# an early-warning probe.
+
+on:
+  schedule:
+    - cron: "23 5 3 * *" # monthly, 3rd day, 05:23 UTC
+  workflow_dispatch: {}
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: scan flagship frameworks for README-class skills
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python - <<'EOF'
+          import json, os, re, sys, urllib.request
+
+          REPOS = {
+              "anthropics/skills": ["skills", "commands"],
+              "obra/superpowers": ["skills"],
+              "addyosmani/agent-skills": ["agents", "commands", "skills"],
+          }
+          NAME_RE = re.compile(r"read.?me", re.IGNORECASE)
+          headers = {
+              "Accept": "application/vnd.github+json",
+              "User-Agent": "readme-anatomy-ecosystem-watch",
+              "Authorization": f"Bearer {os.environ['GH_TOKEN']}",
+          }
+
+          def api(url):
+              req = urllib.request.Request(url, headers=headers)
+              with urllib.request.urlopen(req, timeout=30) as r:
+                  return json.load(r)
+
+          hits = []
+          scanned = 0
+          for repo, dirs in REPOS.items():
+              for d in dirs:
+                  try:
+                      entries = api(f"https://api.github.com/repos/{repo}/contents/{d}")
+                  except Exception as e:
+                      print(f"note: {repo}/{d} unreachable ({e}); skipped")
+                      continue
+                  if not isinstance(entries, list):
+                      continue
+                  for entry in entries:
+                      name = entry.get("name", "")
+                      scanned += 1
+                      if NAME_RE.search(name) and name.lower() != "readme.md":
+                          hits.append(f"{repo}/{d}/{name}")
+
+          print(f"scanned {scanned} top-level entries across {len(REPOS)} frameworks")
+          if hits:
+              print("README-craft skill detected -- whitespace claim expired:")
+              for h in hits:
+                  print(f"  {h}")
+              sys.exit(1)
+          print("no README-class skill found in flagship frameworks; whitespace holds")
+          EOF

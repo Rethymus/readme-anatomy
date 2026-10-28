@@ -12,6 +12,10 @@ jobs:
           python-version: "3.12"
       - name: selftest (dual-anchor fixtures)
         run: python scripts/readme_doctor.py --selftest
+      - name: skill spec validation (agentskills.io frontmatter + body budget)
+        run: |
+          python scripts/validate_skill.py --selftest
+          python scripts/validate_skill.py .
       - name: gates on own README (bilingual)
         run: python scripts/readme_doctor.py README.md --name readme-anatomy --zh README.zh-CN.md
       - name: json report smoke (machine-readable output parses)

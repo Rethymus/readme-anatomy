@@ -54,10 +54,13 @@ that is this ledger's first maintenance item.
 ## Decay watchlist — what rots first, and how to notice
 
 If this skill stops working in a year, it will most likely be one of these,
-in this order. Each entry names its cheap detection probe. Items 5 and 6 run
-automatically every week via `.github/workflows/decay-watch.yml` (live GET
-probes against this repo's own bilingual README pair); the rest stay
-procedural on purpose.
+in this order. Each entry names its cheap detection probe. Items 2, 5 and 6
+run automatically (`.github/workflows/ecosystem-watch.yml` monthly — flagship
+framework scans for README-class skills; `decay-watch.yml` weekly — live GET
+probes of this repo's own bilingual pair; `validate_skill.py` in
+`readme-gates.yml` on every push — spec frontmatter + body budget). The
+remaining probes stay procedural on purpose: they need judgment, not
+thresholds.
 
 1. **GitHub slug & admonition rendering changes** (highest traffic, most
    silent). Our slugger approximates github-slugger; GitHub may change emoji
@@ -66,11 +69,15 @@ procedural on purpose.
    github.com rendering by hand.
 2. **Ecosystem whitespace closes.** A major framework (superpowers /
    addyosmani / anthropics) ships a README-craft skill and our differentiation
-   claim goes stale. Probe: the proposal's two `gh search` queries, quarterly.
+   claim goes stale. Probe: **automated monthly** by
+   `.github/workflows/ecosystem-watch.yml` (top-level scan of the three
+   flagship skill directories; a hit is a red light, not a broken build).
 3. **agentskills.io spec evolution.** New required frontmatter fields or a
-   stricter validator would fail our SKILL.md. Probe: run the official
-   `skills-ref validate` on this repo each release; keep `metadata.version`
-   current.
+   stricter validator would fail our SKILL.md. Probe: **mechanical half
+   automated on every push** — `scripts/validate_skill.py` in CI enforces the
+   2026-10-27 constraint set (name/description/license/compatibility/metadata
+   rules, ≤500-line body); re-read the spec itself each release for semantic
+   changes, and keep `metadata.version` current.
 4. **Model-context behavior shifts.** Newer models handle long context
    better, which can turn the ≤ 3-reference budget from measurement into
    folklore. Probe: re-check the Liu et al. basis and current model cards
