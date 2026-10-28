@@ -48,7 +48,7 @@ so any agent can run the method, not just admire it.
 **One-liner for your agent:**
 
 ```text
-Install readme-anatomy for me: https://raw.githubusercontent.com/Rethymus/readme-anatomy/v0.7.1/INSTALL.md
+Install readme-anatomy for me: https://raw.githubusercontent.com/Rethymus/readme-anatomy/v0.8.0/INSTALL.md
 ```
 
 Prefer the one-liner. From a checkout:
@@ -70,7 +70,7 @@ copy the `readme-anatomy/` directory into your skills directory. Full details:
 - Validates a README with seven offline machine gates (stdlib-only Python);
   reference-style links and setext headings parsed; optional `--live` link
   liveness using GET; `--json` report for CI and agent loops; broken anchors
-  come back with nearest-slug suggestions; cross-surface consistency checked
+  come back with nearest-slug suggestions; bilingual evidence tables are parity-checked (row counts and anchor sets), cross-surface consistency checked
   (one-liner origin and pin vs the git remote and latest tag, SKILL.md and
   package versions vs the tag). `--fix` repairs the mechanical classes in
   place -- including regenerating a stale table of contents from the current
@@ -117,10 +117,10 @@ Rules cite anchors; anchors never carry the rules.
 
 | Claim | Where | Notes |
 |---|---|---|
-| Seven gates, selftest all green | `python scripts/readme_doctor.py --selftest` -> `42/42 green` | the count is a claim: adding fixtures without updating this row turns CI red |
+| Seven gates, selftest all green | `python scripts/readme_doctor.py --selftest` -> `45/45 green` | the count is a claim: adding fixtures without updating this row turns CI red |
 | MCP surface green | `python scripts/mcp_server.py --selftest` -> `10/10 green` | child-process handshake, tool round-trips, protocol guards |
 | Skill spec validation green | `python scripts/validate_skill.py --selftest` -> `11/11 green` | agentskills.io frontmatter + body budget |
-| Claims probe green | `python scripts/claims_probe.py --selftest` -> `16/16 green` | dual-anchor fixtures |
+| Claims probe green | `python scripts/claims_probe.py --selftest` -> `17/17 green` | dual-anchor fixtures |
 | Scaffold output passes the gates | `python scripts/readme_scaffold.py --selftest` -> `passes the gates by construction` | both language files |
 | Real rewrite pair, desensitized | `assets/before.md`, `assets/after.md` | origin project's pre-rework snapshot vs the rework; provenance in `evals/ledger.md` |
 | Rules carry source anchors | `references/research.md` | URLs verified 2026-10-27; 2026 numeric specifics marked unconfirmed; decay watchlist ranks what rots first |

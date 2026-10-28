@@ -4,7 +4,7 @@ description: Rewrite and audit project READMEs with a measurement-first method �
 license: MIT
 compatibility: scripts/ need Python 3.10+ (stdlib only); gates run offline by default
 metadata:
-  version: "0.7.1"
+  version: "0.8"
   method-origin: "distilled from the glasspring README rework (2026-10-27)"
 ---
 
@@ -149,7 +149,8 @@ Seven gates:
 3. **spelling** — exactly one surface form of the project name
 4. **badges** — ≤ 4 badges, every badge links somewhere meaningful, shields.io
    badges use `flat-square`
-5. **bilingual** — switch line bidirectional, zero stale cross-language refs
+5. **bilingual** — switch line bidirectional, zero stale cross-language refs,
+   evidence tables in parity across languages (row counts + anchor sets)
 6. **admonitions** — canonical `[!TYPE]` set, correct casing, no overuse
 7. **surfaces** — cross-surface consistency: the one-liner's repo must match
    the git remote (impostor detection), its pin must not be stale, it must

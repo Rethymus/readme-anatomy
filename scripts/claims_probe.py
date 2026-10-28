@@ -122,6 +122,8 @@ def extract_refs(where_cell: str) -> tuple[list[dict], bool]:
     spans = CODE_SPAN_RE.findall(left)
     refs: list[dict] = []
     for span in spans:
+        if span.startswith("<") and span.endswith(">"):
+            continue  # template placeholder (<repo path or command>), not a reference
         tokens = shlex.split(span)
         if not tokens:
             continue
@@ -351,8 +353,13 @@ def selftest() -> int:
                         {"docs/log.md": "# Bench\n\n## 结果\n\nhere\n"})
         check("must-not-fire: percent-encoded anchor resolves",
               f and f[0][0] == "pass", f[0][1] if f else "")
+        # placeholders are not anchors: an unfilled scaffold row must not
+        # fabricate refs (and must WARN -- it is an unfilled claim)
+        f = _probe_cell(tdp, "`<repo path or command>` with `<仓库路径或命令>`")
+        check("must-fire: placeholder-only Where cell WARNs as unfilled",
+              f and f[0][0] == "warn" and "no verifiable" in f[0][1], f[0][1] if f else "")
 
-    total = 16
+    total = 17
     print(f"selftest: {total - len(fails)}/{total} green")
     return 1 if fails else 0
 

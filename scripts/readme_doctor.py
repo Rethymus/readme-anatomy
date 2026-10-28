@@ -416,6 +416,37 @@ def gate_badges(text: str, ctx: dict) -> tuple[str, list[str], list[str]]:
     return ("fail" if problems else "pass"), problems, warnings
 
 
+def _evidence_table_parity(en_text: str, zh_text: str) -> list[str]:
+    """Bilingual evidence-table parity (gate 5 extension): row counts and the
+    set of command/path references in Where cells must match across languages.
+    Commands are the cross-language-stable anchor -- claims prose translates,
+    evidence anchors must not. Imported lazily: claims_probe imports this
+    module, so a top-level import would be circular."""
+    from claims_probe import extract_refs, parse_evidence_rows
+    en_rows = parse_evidence_rows(en_text)
+    zh_rows = parse_evidence_rows(zh_text)
+    if not en_rows and not zh_rows:
+        return []  # neither side carries an evidence table: nothing to parity-check
+    problems = []
+    if len(en_rows) != len(zh_rows):
+        problems.append(f"evidence tables drifted: {len(en_rows)} EN rows vs "
+                        f"{len(zh_rows)} zh rows")
+
+    def ref_set(rows):
+        refs = set()
+        for _, where in rows:
+            for r, _ in [extract_refs(where)]:
+                refs.update(x["span"] for x in r)
+        return refs
+
+    en_refs, zh_refs = ref_set(en_rows), ref_set(zh_rows)
+    for missing in sorted(en_refs - zh_refs):
+        problems.append(f"evidence anchor missing from zh table: {missing!r}")
+    for extra in sorted(zh_refs - en_refs):
+        problems.append(f"evidence anchor missing from EN table: {extra!r}")
+    return problems
+
+
 def gate_bilingual(text: str, ctx: dict) -> tuple[str, list[str], list[str]]:
     base_dir: Path = ctx["base_dir"]
     self_name: str = ctx["self_name"]
@@ -451,6 +482,7 @@ def gate_bilingual(text: str, ctx: dict) -> tuple[str, list[str], list[str]]:
             zh_links = collect_links(zh_path.read_text(encoding="utf-8"))
             if not any(u.partition("#")[0] == self_name for u in zh_links):
                 problems.append(f"switch line not bidirectional: {zh_name} never links {self_name}")
+            problems += _evidence_table_parity(text, zh_path.read_text(encoding="utf-8"))
     else:
         for sibling in base_dir.glob("README*.md"):
             if sibling.name != self_name and not any(
@@ -789,31 +821,61 @@ def selftest() -> int:
             ]
 
         def _zh_cases():
-            (tmp / "README.md").write_text(
-                "**English** | [zh](README.zh-CN.md)\n", encoding="utf-8")
-            (tmp / "README.zh-CN.md").write_text(
-                "[en](README.md) | **zh**\n", encoding="utf-8")
+            def mkpair(sub: str, en_body: str, zh_body: str):
+                d = tmp / sub
+                d.mkdir()
+                (d / "README.md").write_text(
+                    f"**English** | [zh](README.zh-CN.md)\n\n{en_body}", encoding="utf-8")
+                (d / "README.zh-CN.md").write_text(
+                    f"[en](README.md) | **zh**\n\n{zh_body}", encoding="utf-8")
+                return ((d / "README.md").read_text(encoding="utf-8"),
+                        {"base_dir": d, "self_name": "README.md", "zh": "README.zh-CN.md"})
+
             (tmp2 := tmp / "no-back")
             tmp2.mkdir()
             (tmp2 / "README.md").write_text("[zh](README.zh-CN.md)\n", encoding="utf-8")
             (tmp2 / "README.zh-CN.md").write_text("no back link\n", encoding="utf-8")
             (tmp3 := tmp / "stale")
             tmp3.mkdir()
+
+            ev_head = "## Evidence\n\n| Claim | Where |\n|---|---|\n"
+            bare_txt, bare_ctx = mkpair("bare", "", "")
+            bal_txt, bal_ctx = mkpair(
+                "parity",
+                ev_head + "| a | `python scripts/x.py --selftest` -> `1/1 green` |\n"
+                          "| b | `assets/p.md` |\n",
+                ev_head + "| 甲 | `python scripts/x.py --selftest` -> `1/1 green` |\n"
+                          "| 乙 | `assets/p.md` |\n")
+            row_txt, row_ctx = mkpair(
+                "rowdrift",
+                ev_head + "| a | `python scripts/x.py --selftest` |\n"
+                          "| b | `assets/p.md` |\n",
+                ev_head + "| 甲 | `python scripts/x.py --selftest` |\n")
+            cmd_txt, cmd_ctx = mkpair(
+                "cmddrift",
+                ev_head + "| a | `python scripts/x.py --selftest` |\n"
+                          "| b | `python scripts/y.py --selftest` |\n",
+                ev_head + "| 甲 | `python scripts/x.py --selftest` |\n"
+                          "| 乙 | `python scripts/z.py --selftest` |\n")
+            abs_txt, abs_ctx = mkpair("abspath", "", "")
             return [
-                ("5", "must-not-fire: bidirectional pair", "pass", gate_bilingual,
-                 (tmp / "README.md").read_text(encoding="utf-8"),
-                 {"base_dir": tmp, "self_name": "README.md", "zh": "README.zh-CN.md"}),
+                ("5", "must-not-fire: bidirectional pair (no evidence tables)", "pass",
+                 gate_bilingual, bare_txt, bare_ctx),
                 ("5", "must-fire: missing reverse switch line", "fail", gate_bilingual,
                  (tmp2 / "README.md").read_text(encoding="utf-8"),
                  {"base_dir": tmp2, "self_name": "README.md", "zh": "README.zh-CN.md"}),
                 ("5", "must-fire: stale zh reference (file missing)", "fail",
                  gate_bilingual, "[zh](README.zh-CN.md#quick-start)\n",
                  {"base_dir": tmp3, "self_name": "README.md"}),
+                ("5", "must-not-fire: evidence tables in parity (rows + anchors)", "pass",
+                 gate_bilingual, bal_txt, bal_ctx),
+                ("5", "must-fire: evidence table row-count drift", "fail",
+                 gate_bilingual, row_txt, row_ctx),
+                ("5", "must-fire: evidence anchor set drift", "fail",
+                 gate_bilingual, cmd_txt, cmd_ctx),
                 ("5", "must-not-fire: --zh given as absolute path", "pass",
-                 gate_bilingual,
-                 (tmp / "README.md").read_text(encoding="utf-8"),
-                 {"base_dir": tmp, "self_name": "README.md",
-                  "zh": str((tmp / "README.zh-CN.md").resolve())}),
+                 gate_bilingual, abs_txt,
+                 {**abs_ctx, "zh": str((abs_ctx["base_dir"] / "README.zh-CN.md").resolve())}),
             ]
 
         cases += _link_file_cases()
