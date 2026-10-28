@@ -1,0 +1,38 @@
+name: release
+
+# Tag-driven GitHub Releases. First-party tooling only: this job's token has
+# contents:write, and references/agent-surfaces.md rule 4 (a 2026 study
+# weaponizes setup instructions against agents) is why no third-party action
+# is trusted with it -- the only `uses` is GitHub's own checkout, pinned by
+# commit SHA, and the release step is the gh CLI preinstalled on the runner.
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      # actions/checkout at the v4.4.0 commit; persist-credentials: false
+      # keeps the job token out of the runner's git config -- nothing in this
+      # job reads stored git credentials (the release step authenticates via
+      # the GH_TOKEN environment variable).
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          # not required by gh: --generate-notes is generated server-side by
+          # the GitHub Release Notes API, not from the local clone. Kept as a
+          # cheap completeness default so any future step that reads history
+          # locally (verifying the tag commit, attaching built assets) sees
+          # the full graph.
+          fetch-depth: 0
+          persist-credentials: false
+      - name: create the GitHub release (first-party gh CLI; rerun-safe)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        # a completed release makes a rerun a no-op instead of a 422 already_exists
+        run: gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 || gh release create "$GITHUB_REF_NAME" --generate-notes --title "$GITHUB_REF_NAME"

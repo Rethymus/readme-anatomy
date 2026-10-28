@@ -90,6 +90,11 @@ copy the `readme-anatomy/` directory into your skills directory. Full details:
 - Scaffolds a gates-clean README skeleton from the four answers
   (`scripts/readme_scaffold.py` — output passes the doctor by construction),
   and carries a real before/after pair plus copy-paste templates.
+- Runs release automation first-party: a `v*` tag push publishes the GitHub
+  Release via the runner's own `gh` CLI (`--generate-notes`;
+  `.github/workflows/release.yml`) — no third-party action is ever granted the
+  `contents: write` token (the weaponized-setup stance:
+  `references/agent-surfaces.md`).
 
 ## 5. How it works
 
@@ -132,7 +137,7 @@ Rules cite anchors; anchors never carry the rules.
 ## 8. FAQ
 
 - *Why a skill and not a linter?* A linter can fail a broken anchor; it cannot
-  decide that "blazingly fast" must become a tiered number or be deleted. The
+  decide that "game-changing" must become a tiered number or be deleted. The
   skill pairs judgment (agent + references) with enforcement (gates).
 - *How is this different from readme-ai?* readme-ai generates
   credible-looking documents; readme-anatomy forces claims to be checkable.

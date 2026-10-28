@@ -6,7 +6,7 @@
 *把 README 写作变成一门测量学科的项目 skill——结构、主张分级、机器门禁。*
 
 > [!NOTE]
-> 英文 `README.md` 是 source of truth。本翻译可能滞后；冲突时以英文版为准。最后同步：2026-10-28。
+> 英文 `README.md` 是 source of truth。本翻译可能滞后；冲突时以英文版为准。最后同步：2026-10-29。
 
 agent 能否证明一份 README 说的是真话，而不只是把它写得看起来可信？
 
@@ -89,6 +89,10 @@ python scripts/readme_doctor.py --selftest   # 预期：全绿
   并把记录的输出口径（`命令 -> `期望文本``）与真实 stdout 比对。它认证的是
   锚点可达，不是主张为真。
 - 附真实重写前后对照对（脱敏）与头部、证据表、FAQ 的即用模板。
+- 发布自动化同样保持第一方：`v*` tag 推送即由 runner 自带的 `gh` CLI 发布
+  GitHub Release（`--generate-notes`；`.github/workflows/release.yml`）——
+  第三方 action 永远拿不到 `contents: write` 令牌（setup 指令武器化立场见
+  `references/agent-surfaces.md`）。
 
 ## 5. 工作原理
 
@@ -127,7 +131,7 @@ python scripts/readme_doctor.py --selftest   # 预期：全绿
 ## 8. 常见问题
 
 - *为什么是 skill 而不是 linter？* linter 能让坏锚点 FAIL，却无法判定
-  "blazingly fast"必须改成分级的数字或删除。本 skill 把判断（agent +
+  "game-changing"必须改成分级的数字或删除。本 skill 把判断（agent +
   references）与强制（门禁）配对。
 - *和 readme-ai 有什么不同？* readme-ai 生成可信外观的文档；readme-anatomy
   强迫主张变得可检查。完整的先行者地图见 `references/research.md`。

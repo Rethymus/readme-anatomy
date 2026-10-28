@@ -87,7 +87,7 @@ URL_RE = re.compile(r"^https?://", re.IGNORECASE)
 # Heuristic (lexical) by design -- the semantic layer's watchlist, NOT a
 # gate: hits are advisory WARN findings and never change exit codes, ref
 # counters, or gate outcomes. Known false-positive class: the phrases
-# quoted as examples (this repo's own FAQ, claims-posture.md itself) fire
+# quoted as examples (claims-posture.md itself) fire
 # too; mention-vs-use is a semantic judgment left to the author.
 MARKETING_PHRASES = (
     "blazingly fast",
