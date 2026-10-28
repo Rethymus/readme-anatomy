@@ -40,23 +40,27 @@ agent-facing artifacts):
 
 | Paper | Grounds | Link |
 |---|---|---|
-| READU: *Inconsistency-Driven Just-in-Time Detection and Repair of README Bugs* (Baek, Krampf, Pradel, 2026) | Academic twin of the claims probe: README defects detected against repo-internal/external sources, then auto-repaired — the probe implements the *detection* half for evidence anchors (structure + anchorability); claim-vs-code semantic consistency remains out of scope | arXiv API: `http://export.arxiv.org/api/query?search_query=ti:%22READU%22` |
-| *Why Does CLAUDE.md Keep Growing? Catastrophic Remembering in Agentic Coding* (Chakrabarti, 2026) | Agent instruction files grow over their lifetime; rationale-encoding curbs bloat (specific growth figure **unconfirmed**, see ledger note) — grounds agent-surfaces.md rules 1–3 and the README-stays-human-shaped rule | arXiv API title search, same session |
-| *Setup Complete, Now You Are Compromised: Weaponizing Setup Instructions Against AI Coding Agents* (Bagmar, Saraf, 2026) | Setup instructions are a supply-chain attack surface — grounds the executable-trust rules in `install-one-liner.md`, `agent-surfaces.md` rule 4, and claims_probe's opt-in `--run` | arXiv API title search, same session |
-| *A Multi-Surface Consistency Audit of Software Citation Metadata* (Shan, 2026) | Multi-surface projects frequently carry core-field conflicts (precise rate **unconfirmed**, see ledger note) — grounds gate 7 and "one fact, one home" | arXiv API title search, same session |
+| READU: *Inconsistency-Driven Just-in-Time Detection and Repair of README Bugs* (Baek, Krampf, Pradel, 2026) | Academic twin of the claims probe: README defects detected against repo-internal/external sources, then auto-repaired — the probe implements the *detection* half for evidence anchors (structure + anchorability); claim-vs-code semantic consistency remains out of scope. Abstract figures (verified 2026-10-28): 6,000 recent commits across 6 popular repos (incl. Linux, Spring Boot) yielded 244 true positives at 75% precision, 217 auto-repaired; 66 README bugs reported (44 confirmed, 26 fixed); <$0.01 and <1 min per commit | https://arxiv.org/abs/2607.15780 |
+| *Why Does CLAUDE.md Keep Growing? Catastrophic Remembering in Agentic Coding* (Chakrabarti, 2026) | Agent instruction files grow over their lifetime; rationale-encoding curbs bloat — grounds agent-surfaces.md rules 1–3 and the README-stays-human-shaped rule. Abstract figures (verified 2026-10-28): 1,867 repos / 247,694 instruction lifecycles; +226% growth within the lifecycle (more than triple), +4.9 net instructions/commit, deletion log-hazard −0.032/commit; prompt comments remove 99.3% of redundant instruction accrual (+211.3% → +1.4%); WildIFEval real-instruction following up to +23.1% | https://arxiv.org/abs/2608.11095 |
+| *Setup Complete, Now You Are Compromised: Weaponizing Setup Instructions Against AI Coding Agents* (Bagmar, Saraf, 2026) | Setup instructions are a supply-chain attack surface — grounds the executable-trust rules in `install-one-liner.md`, `agent-surfaces.md` rule 4, and claims_probe's opt-in `--run`. Abstract (verified 2026-10-28): 12 scenarios, 5 attack classes — the abstract carries no success-rate figures | https://arxiv.org/abs/2607.15143 |
+| *A Multi-Surface Consistency Audit of Software Citation Metadata* (Shan, 2026) | Multi-surface projects frequently carry core-field conflicts — grounds gate 7 and "one fact, one home". Abstract figures (verified 2026-10-28): 117 open-source research-software projects (87 HPC/quantum + 30 JOSS/pyOpenSci baseline), up to 7 surfaces each; of the 62 projects exposing ≥2 comparable surfaces, 52 (83.9%) have at least one core-field conflict; 28 of 32 CITATION.cff files with a preferred citation point to a record inconsistent with the software's own metadata; verdict precision 98.5% on a 338-row stratified human sample | https://arxiv.org/abs/2608.17159 |
 | *Maintenance Signals in AI-Assisted GitHub Repositories* (Tsuchida et al., 2026) | AI-assisted repos ship longer READMEs with more headers/code blocks — supports the section cap and anti-bloat posture | arXiv API title search, same session |
 | *Falsifiable Release Gates for Self-Improving Systems* (Soni, 2026) | Safety claims degrade to "a promise in a README" — grounds claim tiering as an anti-promise device | arXiv API title search, same session |
 
 Ledger note — **verification status of the 2026 entries**: titles came from
 arXiv API queries on 2026-10-27 and the numeric specifics in the summaries
 ("~226% growth", "83.9% of projects") came from abstract-level summaries, not
-from reading the papers. A re-verification attempt (2026-10-27 evening)
-returned HTTP 429 from the arXiv API, so **treat those two numbers as
-unconfirmed** until a human reads the papers. The rules they inform do not
-depend on the exact figures — instruction-file bloat and multi-surface drift
-are directionally grounded; the percentages are illustrative. Replace each
-entry with its stable `arxiv.org/abs/` link and the checked number when next
-re-verified.
+from reading the papers; a re-verification attempt that evening returned
+HTTP 429 from the arXiv API. **Re-verified 2026-10-28**: a literature
+reviewer pass checked all four entries that carry numeric specifics against
+the papers' own arXiv abstracts (first-hand), and the table above now records
+stable `arxiv.org/abs/` links with the checked figures — 226% (CLAUDE.md
+growth) and 83.9% (multi-surface conflicts) are confirmed at abstract level.
+The remaining two 2026 rows (Tsuchida, Soni) carry no figures; their links
+are still API-search placeholders. Full-text reading remains open, so
+abstract-level is the stated strength of every number here — and the
+weaponization abstract gives scenario/attack counts only, no success rates.
+The rules these entries inform still do not depend on the exact figures.
 
 ## Decay watchlist — what rots first, and how to notice
 

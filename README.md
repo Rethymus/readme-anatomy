@@ -120,10 +120,10 @@ Rules cite anchors; anchors never carry the rules.
 | Seven gates, selftest all green | `python scripts/readme_doctor.py --selftest` -> `48/48 green` | the count is a claim: adding fixtures without updating this row turns CI red |
 | MCP surface green | `python scripts/mcp_server.py --selftest` -> `11/11 green` | child-process handshake, tool round-trips, protocol guards |
 | Skill spec validation green | `python scripts/validate_skill.py --selftest` -> `11/11 green` | agentskills.io frontmatter + body budget |
-| Claims probe green | `python scripts/claims_probe.py --selftest` -> `17/17 green` | dual-anchor fixtures |
+| Claims probe green | `python scripts/claims_probe.py --selftest` -> `20/20 green` | dual-anchor fixtures |
 | Scaffold output passes the gates | `python scripts/readme_scaffold.py --selftest` -> `passes the gates by construction` | both language files |
 | Real rewrite pair, desensitized | `assets/before.md`, `assets/after.md` | origin project's pre-rework snapshot vs the rework; provenance in `evals/ledger.md` |
-| Rules carry source anchors | `references/research.md` | URLs verified 2026-10-27; 2026 numeric specifics marked unconfirmed; decay watchlist ranks what rots first |
+| Rules carry source anchors | `references/research.md` | URLs verified 2026-10-27; 2026 numeric specifics confirmed 2026-10-28 (arXiv abstracts, first-hand); decay watchlist ranks what rots first |
 | Agent-surface discipline | `references/agent-surfaces.md` | AGENTS.md standard + 2026 literature (directional) |
 | Bilingual self-dogfood | `README.md` + `README.zh-CN.md`, gate 5 | this repo consumes its own bilingual gates |
 | CI enforcement | `.github/workflows/readme-gates.yml` | selftests + bilingual gates + claims probe `--run` on every push |

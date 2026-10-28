@@ -37,6 +37,14 @@ unrecognized command word WARNs instead of guessing.
 This is deliberately NOT gate 8 of readme_doctor.py: the doctor's gates apply
 to any README; the evidence table is this method's own semantic contract.
 
+The marketing sweep (sweep_marketing) is a second, independent semantic-layer
+output: the README body (code fences blanked first) is scanned for the
+marketing tier's forbidden phrases (references/claims-posture.md) and each
+hit is reported as a WARN-class advisory finding. It is a heuristic -- a
+lexical hit says "look here", not "this is false"; deciding mention-vs-use
+(quoted examples fire too) stays with the author. Sweep findings never touch
+the exit code, the ref counters, or any gate outcome.
+
 Usage
   python scripts/claims_probe.py README.md [--run] [--json]
   python scripts/claims_probe.py --selftest
@@ -71,6 +79,45 @@ SEPARATOR_RE = re.compile(r"^[\s|:-]+$")
 CODE_SPAN_RE = re.compile(r"`([^`\n]+)`")
 EXPECT_SPLIT_RE = re.compile(r"\s*(?:→|->)\s*")
 URL_RE = re.compile(r"^https?://", re.IGNORECASE)
+
+# ------------------------------------------------- marketing sweep (L2) ----
+# references/claims-posture.md, marketing tier: persuasion without a
+# verifiable referent. The list is the tier's own forbidden-wording column,
+# kept as a constant so the posture file stays the source of truth.
+# Heuristic (lexical) by design -- the semantic layer's watchlist, NOT a
+# gate: hits are advisory WARN findings and never change exit codes, ref
+# counters, or gate outcomes. Known false-positive class: the phrases
+# quoted as examples (this repo's own FAQ, claims-posture.md itself) fire
+# too; mention-vs-use is a semantic judgment left to the author.
+MARKETING_PHRASES = (
+    "blazingly fast",
+    "battle-tested",
+    "enterprise-grade",
+    "100% open source",
+    "used by thousands",
+)
+MARKETING_TIER_REF = "references/claims-posture.md (marketing tier)"
+
+
+def sweep_marketing(text: str) -> list[tuple[int, str]]:
+    """Heuristic sweep of the README body for marketing-tier phrasing.
+
+    Code fences are blanked first (strip_code_fences), so fenced snippets,
+    config samples and quoted fixtures never fire. Matching is
+    case-insensitive substring; one finding per line (the finding is about
+    the line, not the count). Returns [(line_no, detail), ...]; probe()
+    carries these as WARN-class advisory findings in report["marketing"].
+    A hit flags a line for human judgment -- it fails nothing."""
+    hits: list[tuple[int, str]] = []
+    for i, line in enumerate(strip_code_fences(text).splitlines(), start=1):
+        low = line.lower()
+        for phrase in MARKETING_PHRASES:
+            if phrase in low:
+                hits.append((i, f"'{phrase}' reads as marketing-tier phrasing "
+                                f"without a verifiable referent -- number it, "
+                                f"path it, or delete ({MARKETING_TIER_REF})"))
+                break  # one finding per line
+    return hits
 
 
 def parse_evidence_rows(text: str) -> list[tuple[str, str]]:
@@ -226,8 +273,12 @@ def probe(readme: Path, *, run: bool = False) -> dict:
     """Programmatic entry (CLI and MCP share this): returns a report dict."""
     text = readme.read_text(encoding="utf-8")
     rows = parse_evidence_rows(text)
+    # marketing sweep is advisory: report["marketing"] is additive and is
+    # never folded into failed/warned -- exit codes and gate outcomes are
+    # untouched by construction (heuristic semantic layer, see module docs)
     report = {"file": str(readme), "run": bool(run), "rows": [],
-              "failed": 0, "warned": 0, "checked": 0}
+              "failed": 0, "warned": 0, "checked": 0,
+              "marketing": sweep_marketing(text)}
     if not rows:
         report["summary"] = "SKIP (no evidence table found)"
         return report
@@ -264,8 +315,11 @@ def probe(readme: Path, *, run: bool = False) -> dict:
 
 def selftest() -> int:
     fails = []
+    ran = 0
 
     def check(name, ok, detail=""):
+        nonlocal ran
+        ran += 1
         print(f"  [{'PASS' if ok else 'FAIL'}] {name}" + (f": {detail}" if detail else ""))
         if not ok:
             fails.append(name)
@@ -359,7 +413,35 @@ def selftest() -> int:
         check("must-fire: placeholder-only Where cell WARNs as unfilled",
               f and f[0][0] == "warn" and "no verifiable" in f[0][1], f[0][1] if f else "")
 
-    total = 17
+        # marketing sweep -- heuristic semantic layer, advisory by design:
+        # dual anchors per the claims-posture marketing tier
+        hits = sweep_marketing("# t\n\nOur tool is blazingly fast and battle-tested.\n")
+        check("must-fire: marketing phrase in body WARNs (advisory, cites the tier)",
+              len(hits) == 1 and "blazingly fast" in hits[0][1]
+              and "marketing" in hits[0][1], str(hits))
+        check("must-not-fire: same phrase inside a code fence is exempt",
+              sweep_marketing("# t\n\n```\nblazingly fast\n```\n\nplain prose\n") == [],
+              str(sweep_marketing("# t\n\n```\nblazingly fast\n```\n\nplain prose\n")))
+        check("must-not-fire: ordinary wording does not trip the list",
+              sweep_marketing("# t\n\nA fast, reliable, widely used little tool.\n") == [],
+              str(sweep_marketing("# t\n\nA fast, reliable, widely used little tool.\n")))
+        # integration: probe() carries hits without moving the gate-relevant
+        # counters (failed/warned) -- advisory means the exit class is intact
+        bench = tdp / "scripts" / "bench.py"
+        bench.parent.mkdir(parents=True, exist_ok=True)
+        bench.write_text("print(1)\n", encoding="utf-8")
+        readme = tdp / "README.md"
+        readme.write_text("# t\n\nBlazingly fast, battle-tested.\n\n## Evidence\n\n"
+                          "| Claim | Where |\n|---|---|\n"
+                          "| c | `scripts/bench.py` |\n", encoding="utf-8")
+        rep = probe(readme)
+        check("marketing hits stay advisory: carried in report, counters untouched",
+              len(rep["marketing"]) == 1 and rep["failed"] == 0 and rep["warned"] == 0,
+              str(rep["marketing"]))
+
+    total = ran  # derived from the checks actually run -- a hand-maintained
+                 # total had drifted from birth (v0.7.0 shipped 16 over 15
+                 # fixtures; v0.8.0 preserved the offset at 17 over 16)
     print(f"selftest: {total - len(fails)}/{total} green")
     return 1 if fails else 0
 
@@ -390,6 +472,12 @@ def main(argv=None) -> int:
         for status, detail in row["findings"]:
             print(f"      {status.upper():4} {detail}")
     print(f"  -> {report['summary']}")
+    marketing = report.get("marketing") or []
+    if marketing:
+        print(f"  marketing sweep: {len(marketing)} hit(s) -- WARN-class advisory "
+              f"only, gates untouched ({MARKETING_TIER_REF})")
+        for line_no, detail in marketing:
+            print(f"      WARN l{line_no:<4} {detail}")
     if args.json:
         print(json.dumps(report, ensure_ascii=False, indent=2))
     return 1 if report["failed"] else 0

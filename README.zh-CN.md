@@ -115,10 +115,10 @@ python scripts/readme_doctor.py --selftest   # 预期：全绿
 | 七门禁自测全绿 | `python scripts/readme_doctor.py --selftest` -> `48/48 green` | 数量即主张：增删 fixture 不同步更新此行，CI 变红 |
 | MCP 表面全绿 | `python scripts/mcp_server.py --selftest` -> `11/11 green` | 子进程握手、工具往返、协议守卫 |
 | 规范校验全绿 | `python scripts/validate_skill.py --selftest` -> `11/11 green` | agentskills.io frontmatter + 行数预算 |
-| 证据探针全绿 | `python scripts/claims_probe.py --selftest` -> `17/17 green` | 双锚点 fixture |
+| 证据探针全绿 | `python scripts/claims_probe.py --selftest` -> `20/20 green` | 双锚点 fixture |
 | 脚手架产物过门禁 | `python scripts/readme_scaffold.py --selftest` -> `passes the gates by construction` | 双语两文件 |
 | 真实重写前后对（脱敏） | `assets/before.md`、`assets/after.md` | 起源项目重构前快照 vs 重写版；出处见 `evals/ledger.md` |
-| 规则带出处锚点 | `references/research.md` | URL 已于 2026-10-27 验证；2026 数字细节标注未确认；衰变观察哨列出最先腐烂之处 |
+| 规则带出处锚点 | `references/research.md` | URL 已于 2026-10-27 验证；2026 数字细节已于 2026-10-28 经 arXiv 摘要（一手）确认；衰变观察哨列出最先腐烂之处 |
 | agent 表面层纪律 | `references/agent-surfaces.md` | AGENTS.md 标准 + 2026 文献（方向性） |
 | 双语自食其果 | `README.md` + `README.zh-CN.md`，gate 5 | 本仓库消费自己的双语门禁 |
 | CI 强制执行 | `.github/workflows/readme-gates.yml` | 每次 push 跑全部自测 + 双语门禁 + claims `--run` |

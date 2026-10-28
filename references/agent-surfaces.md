@@ -24,8 +24,9 @@ and the agent file grows prose nobody's agent obeys.
    the README's Contributing section ("for AI agents: see `AGENTS.md`").
 3. **Agent instruction files bloat measurably.** A 2026 study reports that
    agent-facing instruction files (CLAUDE.md et al.) grow substantially over
-   their lifetime ("catastrophic remembering"; the exact rate is
-   **unconfirmed** — see the ledger note in `research.md`), and that encoding
+   their lifetime ("catastrophic remembering"; +226% growth within the
+   lifecycle, confirmed 2026-10-28 against the paper's abstract — see the
+   ledger note in `research.md`), and that encoding
    *rationale* instead of accumulating rules curbs the growth. When you touch
    an AGENTS.md, delete as often as you add, and say why a rule exists in one
    clause.

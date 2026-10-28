@@ -66,7 +66,7 @@ validation), `claims_probe` (evidence-table verification). Verify after configur
 
 ```bash
 python <skills-dir>/readme-anatomy/scripts/mcp_server.py --selftest
-# expect: selftest 10/10 green
+# expect: selftest 11/11 green
 ```
 
 ## Uninstall
