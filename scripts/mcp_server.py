@@ -133,7 +133,9 @@ TOOLS = [
                      "spelling, badges, bilingual, admonitions, cross-surface "
                      "consistency) on a README. Pass fix=true to repair the "
                      "mechanical classes in place (TOC, badge style, prose-name "
-                     "drift). live=true GET-probes external links."),
+                     "drift). live=true GET-probes external links. Certifies "
+                     "checkability, not truth -- tier adjudication stays with "
+                     "claims_probe and the author."),
      "inputSchema": _obj({
          "readme": {"type": "string", "description": "path to the README file"},
          "name": {"type": "string", "description": "canonical project name"},
@@ -148,7 +150,9 @@ TOOLS = [
     {"name": "readme_scaffold", "title": "README skeleton generator",
      "description": ("Generate a gates-clean README skeleton (the 'new' task "
                      "mode). Output passes the gates by construction; every "
-                     "<placeholder> is a claim awaiting its tier."),
+                     "<placeholder> is a claim awaiting its tier. Skeleton "
+                     "only: the shape is certified, the claims you fill in "
+                     "are not."),
      "inputSchema": _obj({
          "name": {"type": "string", "description": "canonical project name"},
          "type": {"type": "string", "enum": list(TYPES)},
@@ -160,7 +164,9 @@ TOOLS = [
     {"name": "validate_skill", "title": "agentskills.io spec validation",
      "description": ("Validate a SKILL.md against the agentskills.io spec "
                      "(frontmatter constraints, name==directory, <=500-line "
-                     "body). Defaults to this skill's own directory."),
+                     "body). Defaults to this skill's own directory. Spec "
+                     "conformance only; content quality is readme_doctor's "
+                     "domain."),
      "inputSchema": _obj({
          "skill_dir": {"type": "string", "description": "skill directory (default: this skill)"},
      }, []),
@@ -170,7 +176,8 @@ TOOLS = [
                      "paths exist, cross-file anchors resolve, line numbers are "
                      "in range, commands are on PATH (run=true executes them "
                      "with a 10s timeout and checks exit codes -- a trust "
-                     "decision). Prose or URL-only cells WARN."),
+                     "decision). Prose or URL-only cells WARN. Certifies that "
+                     "anchors resolve, not that the claim is true."),
      "inputSchema": _obj({
          "readme": {"type": "string", "description": "path to the README with the evidence table"},
          "run": {"type": "boolean", "description": "execute commands to check exit codes (default offline)"},
@@ -182,7 +189,8 @@ TOOLS = [
                      "cell, not a separator, and every delimiter row and data "
                      "row must have the same number of cells as the header. "
                      "Fenced/indented code blocks and interrupting HTML "
-                     "blocks are never tables. Read-only."),
+                     "blocks are never tables. Read-only. Structural "
+                     "integrity only; cell semantics are not validated."),
      "inputSchema": _obj({
          "file": {"type": "string", "description": "path to the markdown file"},
      }, ["file"]),

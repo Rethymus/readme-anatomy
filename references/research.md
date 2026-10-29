@@ -121,12 +121,21 @@ thresholds.
    network warns only. The verified-dates line at the top of this file
    stays the human check for the rot a link probe cannot see.
 
+## Instruction-craft corpus
+
+| Anchor | What it grounds | URL |
+|---|---|---|
+| elder-plinius/CL4R1T4S (third-party collection, cited as instruction-craft corpus) | Writing-craft patterns only, behind this repo's instruction-layer additions: evidence-bound assertions, mode-adjudication orderings, tiered decision procedures, non-applicability boundaries stated with the tool they govern, exclusion-form completion criteria, no-process-narration report discipline. **Rights note:** the corpus is a third-party collection of AI vendors' internal instruction documents; rights remain with the original vendors. This project extracts craft patterns (structure, instruction layering and precedence, scope/boundary statements, output contracts, tone discipline) — it never quotes, closely paraphrases, or republishes corpus text; sources are cited by file path only; extraction or evasion techniques are out of scope by standing rule. Probed via `scripts/ledger_probe.py` 2026-10-29 | https://github.com/elder-plinius/CL4R1T4S |
+
 ## Rights & licensing discipline
 
 - No third-party prose is copied into this skill. Anchors cite; they do not
   import. Any future quotation from an external work must carry its license
   note here **before** merging (the standing lesson from glasspring's
   unresolved third-party rights review).
+- The instruction-craft corpus above is pattern-level study material: rules
+  land here only as this project's own wording, and a landing whose diff
+  reproduces corpus text is rejected on sight.
 - The `assets/before.md` / `assets/after.md` pair is this method's origin
   project's own rewrite pair, desensitized to `glasswing` (provenance and
   rights note in `evals/ledger.md`); no third-party text is reproduced.

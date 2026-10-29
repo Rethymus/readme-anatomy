@@ -52,9 +52,17 @@ narrowest mode that covers the request, and say which mode you picked:
 |---|---|---|
 | **new** | No README, or a from-scratch rewrite was asked | Full Steps 1–7; generate the shape with `python scripts/readme_scaffold.py --name X --type T --lang both`, then fill every placeholder |
 | **rewrite** | Existing README, user wants the method applied | Full Steps 1–7, claim-by-claim audit |
-| **small-edit** | A section, badge, link, or wording fix | Touch only the affected section; re-run gates on the whole file; skip the Four Questions except the one the edit touches (usually Q3) |
-| **audit-only** | "Check/audit my README" — no rewrites requested | No edits. Deliver the gate output + tier table as findings |
-| **translate** | "Translate my README" / bilingual setup | Steps 4 + 6 only; read `references/bilingual.md` |
+| **small-edit** | A section, badge, link, or wording fix — e.g. one badge swap, one phrase reworded | Touch only the affected section; re-run gates on the whole file; skip the Four Questions except the one the edit touches (usually Q3) |
+| **audit-only** | "Check/audit my README" — no rewrites requested; also when a reader flags a sentence as unverifiable | No edits. Deliver the gate output + tier table as findings; every stated finding — a missing section included — must come out of a gate's output, never from an impression |
+| **translate** | "Translate my README" / bilingual setup — e.g. the repo already holds this README in two languages | Steps 4 + 6 only; read `references/bilingual.md` |
+
+Overlapping triggers resolve by rule, not by feel: the narrower mode wins.
+Escalate to a wider mode only when the narrow mode's required gate cannot
+pass, or the request clearly exceeds the narrow scope — and state the
+escalation reason in the report. Still torn between small-edit and rewrite?
+The named test: would this change any sentence's claim tier? If yes, it is a
+rewrite. Numeric backstop: an edit touching more than 3 sections is a
+rewrite.
 
 ## Step 1 — Read references on demand (budget: ≤ 3 per task)
 
@@ -160,17 +168,32 @@ Seven gates:
 Fix every FAIL and rerun until exit code 0 (`--fix` repairs the mechanical classes in place: TOC regeneration from current headings, badge flat-square style, drifted prose name surfaces; `--dry-run` previews the same set as a diff without writing). Every WARN needs a stated reason
 to keep — write that reason into the report, do not silently ignore it.
 
+Completion is defined by three exclusions, each mapped to a Step 7
+deliverable: a green run is not a publishable README (gates are necessary,
+never sufficient); reworded prose is not an upgraded claim (an upgrade
+ships an evidence path); a WARN whose keep-reason was never written down is
+not a kept WARN.
+
 ## Step 7 — Report to the author
 
 Deliver: (a) the Four Answers, (b) a claim-tier table (old wording → tier →
-new wording), (c) the gate output. The skill proposes tiers; **the author
-signs off on final claim wording**. Never publish a tier upgrade without the
-evidence path to back it.
+new wording), (c) the gate output — quoted as it was emitted, failing lines
+included, never summarized. The report carries results and evidence only;
+it does not narrate process ("in step N I read X, then ran Y"). A bilingual
+report states the same bare results in both languages. The skill proposes
+tiers; **the author signs off on final claim wording**. Never publish a
+tier upgrade without the evidence path to back it.
 
 ## Judgment sentences — the non-negotiables
 
 - Gates passing is a **necessary condition, not a sufficient one**. A green
   doctor run does not certify truth; it certifies checkability.
+- Absence and allness claims need a run before they need wording. "No
+  dependencies", "works offline", "every link resolves" assert that no
+  counterexample exists — so until a check that could surface one (a
+  manifest field, a probe, a link sweep) has actually been executed, the
+  report has no standing to contain them; once it does, it names that check
+  and the date it ran.
 - A citation is not a measurement. "Benchmarked in paper X" is tier
   development-archive until the benchmark runs against *this* project.
 - The install one-liner must not depend on local paths. If it only works on

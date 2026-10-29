@@ -13,7 +13,7 @@ when in doubt, downgrade.
 |---|---|---|---|
 | **verified** | An evidence path exists *now*, shipped with the claim | "renders in 41±3 ms (bench: `scripts/bench.py`, last run in README of v2.3.0)" | — |
 | **development-archive** | True in the repo, but not shipped, not measured, or not released with the snapshot | "`bench-mode` (development archive: unreleased, see `#214`)" — code font + explicit note | The same fact stated as present-tense product behavior |
-| **marketing** | Persuasion without a verifiable referent | — | "blazingly fast", "battle-tested", "used by thousands", "enterprise-grade" |
+| **marketing** | Persuasion without a verifiable referent | — | "blazingly fast", "battle-tested", "used by thousands", "enterprise-grade"; at sentence level, selling through an undisclosed "not X, but Y" contrast — comparisons belong only in the 30-second before/after table (`references/anatomy.md`) |
 
 Rules:
 
@@ -23,6 +23,29 @@ Rules:
   or the contrast table. The top of the document is verified-only territory.
 - Numbers beat adjectives, ranges beat points, and a number with a reproducible
   path beats both ("41±3 ms, `scripts/bench.py`" not "fast").
+
+## How to place a claim
+
+Work the four steps in order; the first match wins.
+
+1. An evidence path exists that ships with the claim — **verified**.
+2. The fact holds inside the repo but is unreleased, unmeasured, or not part
+   of the shipped snapshot — **development-archive**.
+3. The sentence carries a number but no path — stop and ask the author for
+   the source. Placing the claim for them would be inventing evidence.
+4. Nothing above applies — **marketing**; delete the sentence.
+
+Signals, strong versus weak. Strong: a runnable path, a dated run, a number
+with a range. Weak: a superlative with no named referent, an audience-size
+word, a comparison with no stated baseline. Weak signals do not merely cast
+doubt — they place the sentence, and the only place they reach is the
+marketing tier.
+
+When the author insists on keeping a sentence that this procedure placed at
+marketing: state the three-tier system in one sentence, offer the honest
+alternative (replace the adjective with a verified number), and if the
+overrule stands, record it in the evals ledger like any other downgrade
+overrule — the Author sign-off section below owns that path.
 
 ## Worked example: the MIT narrowing
 
@@ -74,6 +97,13 @@ Every tier-verified claim gets a row; the table lives in the Evidence section
 - External corroboration (papers, third-party benchmarks) goes in a separate
   row and never substitutes for a local path.
 - The table is dated. Undated evidence tables rot silently.
+- Absence claims are claims too. "No runtime dependencies", "works offline",
+  "every link resolves" assert that a counterexample does not exist, so the
+  Where cell must hold the check that would surface one (a manifest field, a
+  dependency listing, a link sweep) plus the date that check was run. No
+  negative row is written before its check has actually been executed — the
+  "No runtime dependencies" row above earns its place by pointing at the
+  manifest, not at confidence.
 
 ## Author sign-off
 
