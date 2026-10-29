@@ -42,7 +42,7 @@ from validate_skill import validate as validate_skill_dir  # noqa: E402
 from claims_probe import probe as claims_probe_run  # noqa: E402
 
 PROTOCOL_VERSION = "2025-06-18"
-SERVER_INFO = {"name": "readme-anatomy", "version": "0.10.1"}
+SERVER_INFO = {"name": "readme-anatomy", "version": "0.11.0"}
 
 
 # ------------------------------------------------------------------ tools ----

@@ -16,6 +16,12 @@ jobs:
           python-version: "3.12"
       - name: selftest (dual-anchor fixtures)
         run: python scripts/readme_doctor.py --selftest
+      - name: table integrity (escape-aware GFM pipe tables)
+        run: |
+          python scripts/table_doctor.py --selftest
+          python scripts/table_doctor.py evals/ledger.md
+          python scripts/table_doctor.py README.md
+          python scripts/table_doctor.py README.zh-CN.md
       - name: skill spec validation (agentskills.io frontmatter + body budget)
         run: |
           python scripts/validate_skill.py --selftest
