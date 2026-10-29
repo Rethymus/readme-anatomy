@@ -80,13 +80,17 @@ copy the `readme-anatomy/` directory into your skills directory. Full details:
 - Keeps the repo's agent surfaces (AGENTS.md, llms.txt) consistent with the
   README instead of duplicating it.
 - Serves the whole toolchain over MCP stdio (`scripts/mcp_server.py` --
-  four tools, JSON-RPC 2.0, no SDK dependency) for hosts that prefer
+  five tools, JSON-RPC 2.0, no SDK dependency) for hosts that prefer
   native tool calls to shell round-trips.
 - Probes the evidence table READU-style (`scripts/claims_probe.py`): every
   Where cell's path exists, anchors resolve, line numbers are in range,
   commands are on PATH; `--run` executes them, checks exit codes, and compares
   any recorded output contract (`cmd -> `expected text``) against real stdout.
   It certifies anchorability, not truth.
+- Checks GFM table integrity escape-aware (`scripts/table_doctor.py`): a
+  backslash-escaped pipe (`\|`) stays one cell instead of splitting the row,
+  and every delimiter/data row must match its header's cell count -- the
+  defect class that silently drops a column at render time.
 - Scaffolds a gates-clean README skeleton from the four answers
   (`scripts/readme_scaffold.py` — output passes the doctor by construction),
   and carries a real before/after pair plus copy-paste templates.
@@ -123,9 +127,10 @@ Rules cite anchors; anchors never carry the rules.
 | Claim | Where | Notes |
 |---|---|---|
 | Seven gates, selftest all green | `python scripts/readme_doctor.py --selftest` -> `48/48 green` | the count is a claim: adding fixtures without updating this row turns CI red |
-| MCP surface green | `python scripts/mcp_server.py --selftest` -> `11/11 green` | child-process handshake, tool round-trips, protocol guards |
+| MCP surface green | `python scripts/mcp_server.py --selftest` -> `12/12 green` | child-process handshake, tool round-trips, protocol guards |
 | Skill spec validation green | `python scripts/validate_skill.py --selftest` -> `11/11 green` | agentskills.io frontmatter + body budget |
 | Claims probe green | `python scripts/claims_probe.py --selftest` -> `20/20 green` | dual-anchor fixtures |
+| Table integrity green | `python scripts/table_doctor.py --selftest` -> `18/18 green` | escape-aware cell splitting; dual-anchor fixtures |
 | Scaffold output passes the gates | `python scripts/readme_scaffold.py --selftest` -> `passes the gates by construction` | both language files |
 | Real rewrite pair, desensitized | `assets/before.md`, `assets/after.md` | origin project's pre-rework snapshot vs the rework; provenance in `evals/ledger.md` |
 | Rules carry source anchors | `references/research.md` | URLs verified 2026-10-27; 2026 numeric specifics confirmed 2026-10-28 (arXiv abstracts, first-hand); decay watchlist ranks what rots first |

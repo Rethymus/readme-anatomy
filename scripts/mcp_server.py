@@ -3,15 +3,18 @@
 """
 mcp_server.py -- expose the readme-anatomy toolchain as MCP tools over stdio. (v0.1)
 
-Lets an agent session call the seven gates, the scaffold generator, and the
-skill validator natively (no shell round-trip), following the house MCP
-convention: newline-delimited JSON-RPC 2.0 on stdio, no SDK dependency.
+Lets an agent session call the seven gates, the scaffold generator, the
+skill validator, the evidence probe, and the table integrity checker
+natively (no shell round-trip), following the house MCP convention:
+newline-delimited JSON-RPC 2.0 on stdio, no SDK dependency.
 
 Tools
   readme_doctor    run the seven gates on a README; optional in-place --fix;
                    returns the structured report (fixes, per-gate results)
   readme_scaffold  generate a gates-clean bilingual README skeleton
   validate_skill   validate a SKILL.md against the agentskills.io spec
+  claims_probe     verify the evidence table's Where column (READU-style)
+  table_doctor     escape-aware GFM pipe-table integrity check
 
 Usage
   python scripts/mcp_server.py            # serve on stdio
@@ -40,6 +43,7 @@ from readme_doctor import run_gates  # noqa: E402
 from readme_scaffold import TYPES, render_en, render_zh  # noqa: E402
 from validate_skill import validate as validate_skill_dir  # noqa: E402
 from claims_probe import probe as claims_probe_run  # noqa: E402
+from table_doctor import check_file as table_doctor_check_file  # noqa: E402
 
 PROTOCOL_VERSION = "2025-06-18"
 SERVER_INFO = {"name": "readme-anatomy", "version": "0.11.0"}
@@ -106,6 +110,18 @@ def t_claims_probe(a: dict):
     return report, f"{readme}: {report['summary']}"
 
 
+def t_table_doctor(a: dict):
+    path = Path(a["file"])
+    if not path.exists():
+        raise ValueError(f"no such file: {path}")
+    report = table_doctor_check_file(path)
+    verdict = "PASS" if report["passed"] else "FAIL"
+    text = (f"{path}: tables={report['tables']} "
+            f"data_rows={report['data_rows']} "
+            f"defects={len(report['defects'])} -- {verdict}")
+    return report, text
+
+
 def _obj(props: dict, required: list[str] | None = None) -> dict:
     return {"type": "object", "properties": props,
             "required": required or [], "additionalProperties": False}
@@ -160,6 +176,17 @@ TOOLS = [
          "run": {"type": "boolean", "description": "execute commands to check exit codes (default offline)"},
      }, ["readme"]),
      "handler": t_claims_probe},
+    {"name": "table_doctor", "title": "GFM table integrity",
+     "description": ("Escape-aware GFM pipe-table integrity check: a "
+                     "backslash-escaped pipe is a literal pipe inside its "
+                     "cell, not a separator, and every delimiter row and data "
+                     "row must have the same number of cells as the header. "
+                     "Fenced/indented code blocks and interrupting HTML "
+                     "blocks are never tables. Read-only."),
+     "inputSchema": _obj({
+         "file": {"type": "string", "description": "path to the markdown file"},
+     }, ["file"]),
+     "handler": t_table_doctor},
 ]
 
 BY_NAME = {t["name"]: t for t in TOOLS}
@@ -234,8 +261,10 @@ def serve():
 
 def selftest() -> int:
     fails = []
+    ran = [0]
 
     def check(name, ok, detail=""):
+        ran[0] += 1
         print(f"  [{'PASS' if ok else 'FAIL'}] {name}" + (f": {detail}" if detail else ""))
         if not ok:
             fails.append(name)
@@ -272,9 +301,9 @@ def selftest() -> int:
               info.get("name") == "readme-anatomy", str(info))
         r = rpc("tools/list")
         names = sorted(t["name"] for t in r.get("result", {}).get("tools", []))
-        check("tools/list exposes the four tools",
+        check("tools/list exposes the five tools",
               names == ["claims_probe", "readme_doctor", "readme_scaffold",
-                        "validate_skill"],
+                        "table_doctor", "validate_skill"],
               ",".join(names))
 
         # -- readme_doctor: report shape (stable across release windows --
@@ -324,6 +353,16 @@ def selftest() -> int:
         check("claims_probe on this repo's evidence table: 0 FAIL",
               rep["failed"] == 0, rep["summary"])
 
+        # -- table_doctor (must-not-fire: a live round-trip against a gated
+        # repo file -- the ledger carries tables and is table_doctor-gated in
+        # CI, so passed=true here is never vacuous) --
+        ledger = Path(HERE.parent / "evals" / "ledger.md").resolve()
+        r = call("table_doctor", {"file": str(ledger)})
+        rep = r["result"]["structuredContent"]
+        check("table_doctor on evals/ledger.md: tables intact (passed=true)",
+              rep["passed"] is True and rep["tables"] >= 1,
+              f"tables={rep['tables']} defects={len(rep['defects'])}")
+
         # -- dry_run preview over the wire (must-not-fire: never writes) --
         scratch = Path(td) / "scratch"
         scratch.mkdir()
@@ -348,7 +387,10 @@ def selftest() -> int:
         proc.stdin.close()
         proc.wait(timeout=10)
 
-    print(f"selftest: {11 - len(fails)}/11 green")
+    total = ran[0]  # derived from the checks actually run -- claims_probe's
+                    # selftest learned this the hard way: a hand-maintained
+                    # total carried a phantom +1 from birth
+    print(f"selftest: {total - len(fails)}/{total} green")
     return 1 if fails else 0
 
 

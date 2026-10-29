@@ -65,10 +65,12 @@ The rules these entries inform still do not depend on the exact figures.
 ## Decay watchlist — what rots first, and how to notice
 
 If this skill stops working in a year, it will most likely be one of these,
-in this order. Each entry names its cheap detection probe. Items 2, 5 and 6
-run automatically (`.github/workflows/ecosystem-watch.yml` monthly — flagship
+in this order. Each entry names its cheap detection probe. Items 2, 5, 6 and
+8 run automatically (`.github/workflows/ecosystem-watch.yml` monthly — flagship
 framework scans for README-class skills; `decay-watch.yml` weekly — live GET
-probes of this repo's own bilingual pair; `validate_skill.py` in
+probes of this repo's own bilingual pair plus a link-liveness sweep of this
+ledger (`scripts/ledger_probe.py`: an HTTP >= 400 anchor red-lights,
+unreachable network warns only); `validate_skill.py` in
 `readme-gates.yml` on every push — spec frontmatter + body budget). The
 remaining probes stay procedural on purpose: they need judgment, not
 thresholds.
@@ -113,8 +115,11 @@ thresholds.
    surface table in `agent-surfaces.md` needs an update — the entry already
    carries a verify-before-relying note.
 8. **Ledger rot itself.** Every anchor here is dated; a dead anchor gets a
-   replacement note, never a silent deletion. Probe: the verified-dates line
-   at the top of this file.
+   replacement note, never a silent deletion. Probe: **automated weekly** —
+   `scripts/ledger_probe.py` GETs every link in this file
+   (`decay-watch.yml`); a >= 400 response is a red light, unreachable
+   network warns only. The verified-dates line at the top of this file
+   stays the human check for the rot a link probe cannot see.
 
 ## Rights & licensing discipline
 

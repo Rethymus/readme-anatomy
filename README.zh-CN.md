@@ -82,12 +82,15 @@ python scripts/readme_doctor.py --selftest   # 预期：全绿
   小改动不承担全流程成本。
 - 让仓库的 agent 表面层（AGENTS.md、llms.txt）与 README 保持一致，
   而不是互相复制。
-- 整条工具链以 MCP stdio 服务暴露（`scripts/mcp_server.py`——四工具、
+- 整条工具链以 MCP stdio 服务暴露（`scripts/mcp_server.py`——五工具、
   JSON-RPC 2.0、零 SDK 依赖），偏好原生工具调用的宿主无需绕行 shell。
 - 以 READU 方式核查证据表（`scripts/claims_probe.py`）：每格“在哪”的
   路径存在、锚点可达、行号在界、命令在 PATH；`--run` 实际执行、查退出码，
   并把记录的输出口径（`命令 -> `期望文本``）与真实 stdout 比对。它认证的是
   锚点可达，不是主张为真。
+- 转义感知地检查 GFM 表格完整性（`scripts/table_doctor.py`）：单元格内的
+  转义管道符（`\|`）仍是一格而不切分行，且每个分隔行/数据行的列数必须与
+  表头一致——正是渲染期静默丢列的缺陷类。
 - 附真实重写前后对照对（脱敏）与头部、证据表、FAQ 的即用模板。
 - 发布自动化同样保持第一方：`v*` tag 推送即由 runner 自带的 `gh` CLI 发布
   GitHub Release（`--generate-notes`；`.github/workflows/release.yml`）——
@@ -117,9 +120,10 @@ python scripts/readme_doctor.py --selftest   # 预期：全绿
 | 主张 | 在哪 | 备注 |
 |---|---|---|
 | 七门禁自测全绿 | `python scripts/readme_doctor.py --selftest` -> `48/48 green` | 数量即主张：增删 fixture 不同步更新此行，CI 变红 |
-| MCP 表面全绿 | `python scripts/mcp_server.py --selftest` -> `11/11 green` | 子进程握手、工具往返、协议守卫 |
+| MCP 表面全绿 | `python scripts/mcp_server.py --selftest` -> `12/12 green` | 子进程握手、工具往返、协议守卫 |
 | 规范校验全绿 | `python scripts/validate_skill.py --selftest` -> `11/11 green` | agentskills.io frontmatter + 行数预算 |
 | 证据探针全绿 | `python scripts/claims_probe.py --selftest` -> `20/20 green` | 双锚点 fixture |
+| 表格完整性全绿 | `python scripts/table_doctor.py --selftest` -> `18/18 green` | 转义感知的单元格切分；双锚点 fixture |
 | 脚手架产物过门禁 | `python scripts/readme_scaffold.py --selftest` -> `passes the gates by construction` | 双语两文件 |
 | 真实重写前后对（脱敏） | `assets/before.md`、`assets/after.md` | 起源项目重构前快照 vs 重写版；出处见 `evals/ledger.md` |
 | 规则带出处锚点 | `references/research.md` | URL 已于 2026-10-27 验证；2026 数字细节已于 2026-10-28 经 arXiv 摘要（一手）确认；衰变观察哨列出最先腐烂之处 |
