@@ -53,7 +53,7 @@ LLM 辅助的 README 生成解决了空白页问题，却制造了真实性问�
 **给你的 agent 的一句话：**
 
 ```text
-Install readme-anatomy for me: https://raw.githubusercontent.com/Rethymus/readme-anatomy/v0.13.0/INSTALL.md
+Install readme-anatomy for me: https://raw.githubusercontent.com/Rethymus/readme-anatomy/v0.14.0/INSTALL.md
 ```
 
 优先用一句话。从检出版使用：

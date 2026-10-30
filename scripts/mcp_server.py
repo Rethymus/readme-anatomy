@@ -46,7 +46,7 @@ from claims_probe import probe as claims_probe_run  # noqa: E402
 from table_doctor import check_file as table_doctor_check_file  # noqa: E402
 
 PROTOCOL_VERSION = "2025-06-18"
-SERVER_INFO = {"name": "readme-anatomy", "version": "0.13.0"}
+SERVER_INFO = {"name": "readme-anatomy", "version": "0.14.0"}
 
 
 # ------------------------------------------------------------------ tools ----
