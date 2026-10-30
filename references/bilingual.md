@@ -1,5 +1,8 @@
 # Bilingual convention & drift policy (L2)
 
+Read when: only when Q4 = bilingual (the translation question; routed from
+SKILL.md Step 1).
+
 Unmanaged bilingualism is deferred divergence. This file fixes the file
 conventions, the switch-line format, and what to do when one language falls
 behind the other.
@@ -41,7 +44,7 @@ default:
 | Lag | Detection | Required response |
 |---|---|---|
 | **Link drift** (translation links to anchors that moved) | Gate 5 + gate 1 on both files | Fix immediately — mechanical, no judgment involved |
-| **Content drift** (translation missing new sections) | Diff section counts; the Last-synced date | Either sync now, or move the missing section into a "pending translation" list in the `[!NOTE]`. Never let the translation silently claim parity |
+| **Content drift** (translation missing new sections) | Diff section counts — automated as gate 5's heading-sequence parity when the doctor runs with `--zh`; the Last-synced date remains the human check for what a heading sequence cannot see | Either sync now, or move the missing section into a "pending translation" list in the `[!NOTE]`. Never let the translation silently claim parity |
 | **Terminology drift** (same term, two translations) | Glossary check | One row in a mini-glossary table at the bottom of the translation; the row wins over any single usage |
 
 ## Cross-reference residue

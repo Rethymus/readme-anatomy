@@ -70,7 +70,10 @@ copy the `readme-anatomy/` directory into your skills directory. Full details:
 - Validates a README with seven offline machine gates (stdlib-only Python);
   reference-style links and setext headings parsed; optional `--live` link
   liveness using GET; `--json` report for CI and agent loops; broken anchors
-  come back with nearest-slug suggestions; bilingual evidence tables are parity-checked (row counts and anchor sets), cross-surface consistency checked
+  come back with nearest-slug suggestions; same-repo dynamic/json badge
+  numbers must resolve to a data file on disk; bilingual evidence tables are
+  parity-checked (row counts, anchor sets, and heading-level sequences),
+  cross-surface consistency checked
   (one-liner origin and pin vs the git remote and latest tag, SKILL.md and
   package versions vs the tag). `--fix` repairs the mechanical classes in
   place -- including regenerating a stale table of contents from the current
@@ -85,7 +88,10 @@ copy the `readme-anatomy/` directory into your skills directory. Full details:
 - Probes the evidence table READU-style (`scripts/claims_probe.py`): every
   Where cell's path exists, anchors resolve, line numbers are in range,
   commands are on PATH; `--run` executes them, checks exit codes, and compares
-  any recorded output contract (`cmd -> `expected text``) against real stdout.
+  any recorded output contract (`cmd -> `expected text``) against real stdout;
+  rows whose Status cell says source-only/not-run come back as WARN-class
+  advisory findings, and the body is swept for marketing-tier phrasing the
+  same way.
   It certifies anchorability, not truth.
 - Checks GFM table integrity escape-aware (`scripts/table_doctor.py`): a
   backslash-escaped pipe (`\|`) stays one cell instead of splitting the row,
@@ -118,26 +124,27 @@ Rules cite anchors; anchors never carry the rules.
 > signed off by the author.
 
 - No marketing-copy generation — producing "credible appearance" is the
-  anti-pattern this skill exists to counter.
+  anti-pattern this skill exists to counter; claims are tiered and
+  unverifiable phrasing is deleted instead.
 - No fully automatic translation — conventions and drift policy only.
 - No copying of third-party template content — anchors cite, they never import.
 
 ## 7. Evidence
 
-| Claim | Where | Notes |
-|---|---|---|
-| Seven gates, selftest all green | `python scripts/readme_doctor.py --selftest` -> `48/48 green` | the count is a claim: adding fixtures without updating this row turns CI red |
-| MCP surface green | `python scripts/mcp_server.py --selftest` -> `12/12 green` | child-process handshake, tool round-trips, protocol guards |
-| Skill spec validation green | `python scripts/validate_skill.py --selftest` -> `11/11 green` | agentskills.io frontmatter + body budget |
-| Claims probe green | `python scripts/claims_probe.py --selftest` -> `20/20 green` | dual-anchor fixtures |
-| Table integrity green | `python scripts/table_doctor.py --selftest` -> `18/18 green` | escape-aware cell splitting; dual-anchor fixtures |
-| Scaffold output passes the gates | `python scripts/readme_scaffold.py --selftest` -> `passes the gates by construction` | both language files |
-| Real rewrite pair, desensitized | `assets/before.md`, `assets/after.md` | origin project's pre-rework snapshot vs the rework; provenance in `evals/ledger.md` |
-| Rules carry source anchors | `references/research.md` | URLs verified 2026-10-27; 2026 numeric specifics confirmed 2026-10-28 (arXiv abstracts, first-hand); decay watchlist ranks what rots first |
-| Agent-surface discipline | `references/agent-surfaces.md` | AGENTS.md standard + 2026 literature (directional) |
-| Bilingual self-dogfood | `README.md` + `README.zh-CN.md`, gate 5 | this repo consumes its own bilingual gates |
-| CI enforcement | `.github/workflows/readme-gates.yml` | selftests + bilingual gates + claims probe `--run` on every push |
-| Method grounded in prior art | `references/research.md` (literature tables) | Prana 2018; README-popularity 2022; Liu 2023 (grounds trimming, not the ≤3 number); 2026 cluster |
+| Claim | Where | Status | Notes |
+|---|---|---|---|
+| Seven gates, selftest all green | `python scripts/readme_doctor.py --selftest` -> `52/52 green` | `run-passed` | the count is a claim: adding fixtures without updating this row turns CI red |
+| MCP surface green | `python scripts/mcp_server.py --selftest` -> `12/12 green` | `run-passed` | child-process handshake, tool round-trips, protocol guards |
+| Skill spec validation green | `python scripts/validate_skill.py --selftest` -> `13/13 green` | `run-passed` | agentskills.io frontmatter + body budget + routing-table/references consistency |
+| Claims probe green | `python scripts/claims_probe.py --selftest` -> `22/22 green` | `run-passed` | dual-anchor fixtures |
+| Table integrity green | `python scripts/table_doctor.py --selftest` -> `18/18 green` | `run-passed` | escape-aware cell splitting; dual-anchor fixtures |
+| Scaffold output passes the gates | `python scripts/readme_scaffold.py --selftest` -> `passes the gates by construction` | `run-passed` | both language files |
+| Real rewrite pair, desensitized | `assets/before.md`, `assets/after.md` | `run-passed` | origin project's pre-rework snapshot vs the rework; provenance in `evals/ledger.md` |
+| Rules carry source anchors | `references/research.md` | `run-passed` | URLs verified 2026-10-27; 2026 numeric specifics confirmed 2026-10-28 (arXiv abstracts, first-hand); agent-infrastructure precedent links verified 2026-10-30; decay watchlist ranks what rots first |
+| Agent-surface discipline | `references/agent-surfaces.md` | `run-passed` | AGENTS.md standard + 2026 literature (directional) |
+| Bilingual self-dogfood | `README.md` + `README.zh-CN.md`, gate 5 | `run-passed` | this repo consumes its own bilingual gates |
+| CI enforcement | `.github/workflows/readme-gates.yml` | `run-passed` | selftests + bilingual gates + claims probe `--run` on every push |
+| Method grounded in prior art | `references/research.md` (literature tables) | `run-passed` | Prana 2018; README-popularity 2022; Liu 2023 (grounds trimming, not the ≤3 number); 2026 cluster |
 
 ## 8. FAQ
 

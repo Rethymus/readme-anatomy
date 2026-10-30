@@ -21,10 +21,15 @@ Gates
                  identity drift ("Lumina CLI" vs "lumina-cli" vs "LuminaCLI");
                  unlisted variants can be whitelisted with --allow
   4 badges       <= 4 badges; every badge href is meaningful (not "#"/empty);
-                 shields.io badges use style=flat-square
+                 shields.io badges use style=flat-square; a same-repo
+                 shields dynamic/json badge must resolve to a data file on
+                 disk holding valid JSON (badge numbers are claims with a
+                 Where, not decoration)
   5 bilingual    language switch line is bidirectional; zero stale
                  cross-language references (links into a README.<lang>.md that
-                 does not exist, or fragment-bearing cross-language links)
+                 does not exist, or fragment-bearing cross-language links);
+                 with --zh, evidence tables AND heading-level sequences stay
+                 in parity across the pair
   6 admonitions  [!NOTE]/[!TIP]/[!IMPORTANT]/[!WARNING]/[!CAUTION] only,
                  canonical casing, no more than 2 of one type per document
   7 surfaces     cross-surface consistency: the one-liner's owner/repo must
@@ -66,6 +71,7 @@ import subprocess
 import sys
 import tempfile
 import urllib.error
+import urllib.parse
 import urllib.request
 from collections import Counter
 from pathlib import Path
@@ -392,6 +398,44 @@ def gate_spelling(text: str, ctx: dict) -> tuple[str, list[str], list[str]]:
     return "pass", [f"single surface form (modulo case): {next(iter(keys))!r}"], []
 
 
+DYNAMIC_JSON_BADGE_RE = re.compile(
+    r"shields\.io/badge/dynamic/json\?", re.IGNORECASE)
+RAW_DATA_URL_RE = re.compile(
+    r"https://raw\.githubusercontent\.com/([^/\s]+)/([^/\s]+)/[^/\s]+/(.+)",
+    re.IGNORECASE)
+
+
+def _check_dynamic_badge_target(img: str, ctx: dict, problems: list[str]) -> None:
+    """A badge number is a claim with a Where (references/claims-posture.md):
+    a shields.io dynamic/json badge whose encoded url= points back at THIS
+    repo must resolve to a file on disk holding valid JSON -- the same
+    missing-local-target mechanism gate 2 uses for relative links. Targets on
+    other repos are citations, not our data files: out of scope. Skipped when
+    no origin is known (no git remote / hermetic fixtures)."""
+    if not DYNAMIC_JSON_BADGE_RE.search(img):
+        return
+    origin, base_dir = ctx.get("origin"), ctx.get("base_dir")
+    if not origin or not base_dir:
+        return
+    target = (urllib.parse.parse_qs(urllib.parse.urlsplit(img).query)
+              .get("url") or [""])[0]
+    m = RAW_DATA_URL_RE.match(target)
+    if not m or f"{m.group(1)}/{m.group(2)}".lower() != origin.lower():
+        return
+    rel = m.group(3).strip("/")
+    local = Path(base_dir) / rel
+    if not local.exists():
+        problems.append(f"dynamic/json badge url= names {rel!r}, which does "
+                        "not exist on disk -- badge numbers must be backed by "
+                        "a repo data file (badges are claims too)")
+        return
+    try:
+        json.loads(local.read_text(encoding="utf-8"))
+    except (ValueError, OSError) as e:
+        problems.append(f"dynamic/json badge url= names {rel!r}, which does "
+                        f"not parse as JSON ({e}) -- regenerate the data file")
+
+
 def gate_badges(text: str, ctx: dict) -> tuple[str, list[str], list[str]]:
     problems, warnings = [], []
     badges = 0
@@ -407,10 +451,12 @@ def gate_badges(text: str, ctx: dict) -> tuple[str, list[str], list[str]]:
                 problems.append(f"badge {alt!r} links nowhere ({href!r})")
             if "shields.io" in img and "style=flat-square" not in img:
                 warnings.append(f"badge {alt!r} not flat-square: {img}")
+            _check_dynamic_badge_target(img, ctx, problems)
         for m in IMG_RE.finditer(BADGE_RE.sub("", line)):
             if any(h in m.group(2) for h in BADGE_HOSTS):
                 warnings.append(f"badge {m.group(1)!r} is an unlinked image "
                                 f"(badges must link somewhere meaningful)")
+            _check_dynamic_badge_target(m.group(2), ctx, problems)
     if badges > 4:
         problems.append(f"{badges} badges (max 4)")
     return ("fail" if problems else "pass"), problems, warnings
@@ -445,6 +491,23 @@ def _evidence_table_parity(en_text: str, zh_text: str) -> list[str]:
     for extra in sorted(zh_refs - en_refs):
         problems.append(f"evidence anchor missing from EN table: {extra!r}")
     return problems
+
+
+def _heading_level_parity(en_text: str, zh_text: str) -> list[str]:
+    """Heading-sequence parity (gate 5 extension): the two languages must
+    carry the same section skeleton. Titles translate; the ordered sequence
+    of heading levels may not drift — a section that exists in one language
+    only is content drift made structural (references/bilingual.md's
+    diff-section-counts policy, here as a machine assertion)."""
+    en = [lvl for lvl, _, _ in collect_heading_pairs(en_text)]
+    zh = [lvl for lvl, _, _ in collect_heading_pairs(zh_text)]
+    if en == zh:
+        return []
+    n = min(len(en), len(zh))
+    at = next((i for i in range(n) if en[i] != zh[i]), n)
+    return [f"heading sequences drifted: EN [{','.join(map(str, en))}] vs "
+            f"zh [{','.join(map(str, zh))}] (first divergence at heading "
+            f"{at + 1}) -- sync the missing/reordered section"]
 
 
 def gate_bilingual(text: str, ctx: dict) -> tuple[str, list[str], list[str]]:
@@ -483,6 +546,7 @@ def gate_bilingual(text: str, ctx: dict) -> tuple[str, list[str], list[str]]:
             if not any(u.partition("#")[0] == self_name for u in zh_links):
                 problems.append(f"switch line not bidirectional: {zh_name} never links {self_name}")
             problems += _evidence_table_parity(text, zh_path.read_text(encoding="utf-8"))
+            problems += _heading_level_parity(text, zh_path.read_text(encoding="utf-8"))
     else:
         for sibling in base_dir.glob("README*.md"):
             if sibling.name != self_name and not any(
@@ -584,8 +648,10 @@ GATES = [
     ("anchors", "internal anchors resolve (GitHub slug rules, setext too)", gate_anchors),
     ("links", "link targets exist; reference links defined (GET when --live)", gate_links),
     ("spelling", "one canonical surface form of the project name", gate_spelling),
-    ("badges", "<= 4 badges, meaningful hrefs, flat-square", gate_badges),
-    ("bilingual", "bidirectional switch line, zero stale cross-refs", gate_bilingual),
+    ("badges", "<= 4 badges, meaningful hrefs, flat-square, dynamic/json "
+     "evidence-backed", gate_badges),
+    ("bilingual", "bidirectional switch line, zero stale cross-refs, parity",
+     gate_bilingual),
     ("admonitions", "canonical [!TYPE] set, correct casing", gate_admonitions),
     ("surfaces", "one-liner origin/pin, skill version vs tag, package drift", gate_surfaces),
 ]
@@ -874,6 +940,14 @@ def selftest() -> int:
                 ev_head + "| 甲 | `python scripts/x.py --selftest` |\n"
                           "| 乙 | `python scripts/z.py --selftest` |\n")
             abs_txt, abs_ctx = mkpair("abspath", "", "")
+            head_txt, head_ctx = mkpair(
+                "headparity",
+                "## One\n\nalpha\n\n## Two\n\nbeta\n",
+                "## 一\n\n甲\n\n## 二\n\n乙\n")
+            miss_txt, miss_ctx = mkpair(
+                "headmissing",
+                "## One\n\nalpha\n\n## Two\n\nbeta\n\n## Three\n\ngamma\n",
+                "## 一\n\n甲\n\n## 二\n\n乙\n")
             return [
                 ("5", "must-not-fire: bidirectional pair (no evidence tables)", "pass",
                  gate_bilingual, bare_txt, bare_ctx),
@@ -889,14 +963,33 @@ def selftest() -> int:
                  gate_bilingual, row_txt, row_ctx),
                 ("5", "must-fire: evidence anchor set drift", "fail",
                  gate_bilingual, cmd_txt, cmd_ctx),
+                ("5", "must-not-fire: heading-level sequences in parity", "pass",
+                 gate_bilingual, head_txt, head_ctx),
+                ("5", "must-fire: zh missing a section (heading parity)", "fail",
+                 gate_bilingual, miss_txt, miss_ctx),
                 ("5", "must-not-fire: --zh given as absolute path", "pass",
                  gate_bilingual, abs_txt,
                  {**abs_ctx, "zh": str((abs_ctx["base_dir"] / "README.zh-CN.md").resolve())}),
             ]
 
+        def _badge_dynamic_cases():
+            (tmp / "stats.json").write_text('{"runs": 7}\n', encoding="utf-8")
+            ctx4 = {"base_dir": tmp, "origin": "acme/t"}
+            def _dyn(name: str) -> str:
+                enc = ("url=https%3A%2F%2Fraw.githubusercontent.com%2Facme%2Ft"
+                       "%2Fmain%2F" + name + "&query=%24.runs&style=flat-square")
+                return f"[![s](https://img.shields.io/badge/dynamic/json?{enc})](https://x)"
+            return [
+                ("4", "must-not-fire: same-repo dynamic/json badge backed by "
+                      "on-disk JSON", "pass", gate_badges, _dyn("stats.json"), ctx4),
+                ("4", "must-fire: same-repo dynamic/json badge target missing "
+                      "on disk", "fail", gate_badges, _dyn("gone.json"), ctx4),
+            ]
+
         cases += _link_file_cases()
         cases += _zh_cases()
         cases += _surface_file_cases(tmp)
+        cases += _badge_dynamic_cases()
         for gate, label, expect, fn, text, ctx in cases:
             got = _run_one(fn, text, ctx)
             ok = (got == expect)

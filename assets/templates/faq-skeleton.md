@@ -18,7 +18,9 @@ boundaries section: every boundary generates a "why not X?" question.
   <Answer with a command or a version table, not prose.>
 
 - *<The trust question — "how do I know claim X is true?">*
-  <Link the evidence table row.>
+  <Link the evidence table row, and let countable public evidence answer:
+  a number the reader can click through to — a release page, a merged-PR
+  listing, a benchmark log. A slogan is a non-answer.>
 ```
 
 Anti-patterns (each of these means the entry is decoration):

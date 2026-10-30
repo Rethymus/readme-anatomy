@@ -1,5 +1,8 @@
 # Research — the anchor ledger
 
+Read when: a rule's rationale is challenged, an anchor must be re-verified,
+or the decay watchlist is due (routed from SKILL.md Step 1).
+
 Rules in this skill cite anchors; this ledger is where they live. Anchors are
 acknowledgements, not dependencies: every rule stands on its own rationale,
 and when a source dies the entry gets a replacement note, never a rule change.
@@ -61,6 +64,22 @@ are still API-search placeholders. Full-text reading remains open, so
 abstract-level is the stated strength of every number here — and the
 weaponization abstract gives scenario/attack counts only, no success rates.
 The rules these entries inform still do not depend on the exact figures.
+
+## Agent-infrastructure precedents (round 5.5 research pass)
+
+Three repositories that run agent-facing infrastructure, cited as
+pattern-level precedent for this round's method landings. Rights note for
+every row: what is borrowed is the idea and the pattern — never expression,
+code, or prose; each landing is this repo's own wording, and a landing whose
+diff reproduces source text is rejected on sight. Licenses verified
+2026-10-30 against each repo's GitHub metadata and (for the non-standard
+license) its LICENSE file; URLs probed alive the same day.
+
+| Anchor | Pattern this repo borrows | License (SPDX) | URL |
+|---|---|---|---|
+| paperclipai/paperclip | Separating "the source exists" from "the check actually ran" as distinct statuses in a closed evidence vocabulary; rule files that self-describe their trigger conditions while the root file only routes; matching changes on confusable surfaces by file path rather than by wording; bidirectional documentation-drift audit (shipped-but-undocumented, documented-as-planned) with a fix-facts-not-style patch discipline | MIT | https://github.com/paperclipai/paperclip |
+| vectorize-io/hindsight | Generated artifacts re-checked by CI with a check mode that fails stale output and prints the regeneration command — structural conventions enforced by executables, not proofreading | MIT | https://github.com/vectorize-io/hindsight |
+| mksglu/context-mode | The minimal evidence unit for a benchmark claim (data file plus size plus rerun command); a controlled status vocabulary over capability matrices with upstream evidence attached to each negative cell; problem → counter-example → corrected example → one-sentence rule as the anti-pattern entry shape. Source-available under a non-OSI license: ideas only are taken — no code, no text, no redistribution | Elastic-2.0 | https://github.com/mksglu/context-mode |
 
 ## Decay watchlist — what rots first, and how to notice
 

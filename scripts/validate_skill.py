@@ -23,6 +23,20 @@ Usage
   python scripts/validate_skill.py [SKILL_DIR]   # default: this skill's dir
   python scripts/validate_skill.py --selftest
 
+Beyond the spec constraint set, two repo-internal consistency assertions run
+when the skill carries a references/ directory (the anti-drift half of
+references/bilingual.md and SKILL.md Step 1's routing contract):
+
+  routing table <-> directory   every references/*.md the SKILL.md routing
+                                table names must exist; every references/
+                                *.md must be routed (no silent orphans)
+  Read-when lines               each routed file carries a "Read when:" line
+                                near its head whose core phrase matches the
+                                routing row's When cell -- matched as a
+                                shared >=3-token running phrase (a visible
+                                attribute, so the assertion cannot depend on
+                                wording that paraphrases away)
+
 Stdlib only; parses the YAML subset skills actually use (flat keys, one
 nested map, folded continuation lines) rather than shipping a YAML dep.
 """
@@ -141,7 +155,68 @@ def validate(skill_dir: Path) -> tuple[list[str], list[str]]:
 
     if len(body) > MAX_BODY_LINES:
         fails.append(f"SKILL.md body is {len(body)} lines (max {MAX_BODY_LINES})")
+
+    fails += _routing_consistency(skill_dir, body)
     return fails, warns
+
+
+ROUTING_ROW_RE = re.compile(r"^\|\s*`references/([\w.-]+\.md)`\s*\|(.*)$")
+READ_WHEN_RE = re.compile(r"^Read when:\s*(.+)$")
+READ_WHEN_HEAD_LINES = 6
+SHARED_PHRASE_TOKENS = 3
+
+
+def _tokens(s: str) -> list[str]:
+    return re.findall(r"[a-z0-9]+", s.lower())
+
+
+def _shared_phrase(a: str, b: str, n: int = SHARED_PHRASE_TOKENS) -> bool:
+    """True when the two texts share a contiguous n-token running phrase.
+    A reference file's Read-when line and its routing row are written to
+    agree on a core phrase; titles may paraphrase, core phrases do not --
+    this is the visible attribute the assertion checks."""
+    at, bt = _tokens(a), _tokens(b)
+    bgrams = {tuple(bt[i:i + n]) for i in range(len(bt) - n + 1)}
+    return any(tuple(at[i:i + n]) in bgrams for i in range(len(at) - n + 1))
+
+
+def _routing_consistency(skill_dir: Path, body: list[str]) -> list[str]:
+    """SKILL.md Step-1 routing table vs the references/ directory:
+    (a) every routed file exists and every references/*.md is routed
+    (explicit exemptions would be listed here); (b) each routed file carries
+    a 'Read when:' line near its head whose core phrase matches the routing
+    row's When cell. No-ops when the skill carries no references/ dir."""
+    refs_dir = skill_dir / "references"
+    if not refs_dir.is_dir():
+        return []
+    fails: list[str] = []
+    routed: dict[str, str] = {}
+    for line in body:
+        m = ROUTING_ROW_RE.match(line)
+        if m:
+            routed.setdefault(m.group(1), m.group(2))
+    for p in sorted(refs_dir.glob("*.md")):
+        if p.name not in routed:
+            fails.append(f"references/{p.name} is not routed from SKILL.md "
+                         f"Step 1 -- add a routing row, or record an explicit "
+                         f"exemption in validate_skill.py")
+    for name in sorted(routed):
+        p = refs_dir / name
+        if not p.exists():
+            fails.append(f"SKILL.md routes references/{name}, which does not "
+                         f"exist -- sync SKILL.md Step 1 to the directory")
+            continue
+        head = p.read_text(encoding="utf-8").splitlines()[:READ_WHEN_HEAD_LINES]
+        rw = [m.group(1) for line in head if (m := READ_WHEN_RE.match(line))]
+        if not rw:
+            fails.append(f"references/{name} has no 'Read when:' line in its "
+                         f"first {READ_WHEN_HEAD_LINES} lines -- add one "
+                         f"matching its SKILL.md Step 1 row")
+        elif not any(_shared_phrase(line, routed[name]) for line in rw):
+            fails.append(f"references/{name}'s 'Read when:' line shares no "
+                         f"core phrase with its SKILL.md Step 1 row -- sync "
+                         f"the two")
+    return fails
 
 
 def selftest() -> int:
@@ -204,6 +279,58 @@ def selftest() -> int:
     bad.append(not ok)
     print(f"  [{'PASS' if ok else 'FAIL'}] validate selftest: unknown key warns "
           f"without failing (got {got})")
+
+    # routing-table <-> references consistency (both directions in one probe)
+    def _routing_tree(refs: dict, fm: str) -> Path:
+        d = Path(tempfile.mkdtemp()) / "demo-skill"
+        d.mkdir(parents=True)
+        (d / "SKILL.md").write_text(fm, encoding="utf-8")
+        (d / "references").mkdir()
+        for fname, content in refs.items():
+            (d / "references" / fname).write_text(content, encoding="utf-8")
+        return d
+
+    def _coverage_probe() -> str:
+        fm_rt = good_fm + ("| Read this | When |\n|---|---|\n"
+                           "| `references/a.md` | When the thing happens |\n"
+                           "| `references/b.md` | Always, before anything else |\n")
+        rw = {"a.md": "# A\n\nRead when: the thing happens.\n",
+              "b.md": "# B\n\nRead when: always, before anything else.\n"}
+        fails_good, _ = validate(_routing_tree(rw, fm_rt))
+        with_ok = not fails_good
+        fails_bad, _ = validate(_routing_tree(
+            {"b.md": rw["b.md"], "extra.md": "# E\n"}, fm_rt))
+        bad_ok = bool(fails_bad)  # routed file missing + unrouted file present
+        return "coverage-both-ways" if with_ok and bad_ok else \
+            f"pass={'ok' if with_ok else 'bad'},fail={'ok' if bad_ok else 'bad'}"
+
+    got = _coverage_probe()
+    ok = got == "coverage-both-ways"
+    bad.append(not ok)
+    print(f"  [{'PASS' if ok else 'FAIL'}] validate selftest: routing table vs "
+          f"references/ coverage, both directions (got {got})")
+
+    # Read-when line + core-phrase consistency (both directions in one probe)
+    def _readwhen_probe() -> str:
+        fm_rt = good_fm + ("| Read this | When |\n|---|---|\n"
+                           "| `references/a.md` | When the thing happens |\n")
+        fails_no, _ = validate(_routing_tree(
+            {"a.md": "# A\n\nnothing to route on\n"}, fm_rt))
+        missing_ok = bool(fails_no)  # no Read-when line at all
+        fails_wrong, _ = validate(_routing_tree(
+            {"a.md": "# A\n\nRead when: something entirely unrelated.\n"}, fm_rt))
+        wrong_ok = bool(fails_wrong)  # Read-when present but phrase-unrelated
+        fails_ok, _ = validate(_routing_tree(
+            {"a.md": "# A\n\nRead when: the thing happens.\n"}, fm_rt))
+        good_ok = not fails_ok
+        return "readwhen-both-ways" if missing_ok and wrong_ok and good_ok else \
+            f"missing={'ok' if missing_ok else 'bad'},wrong={'ok' if wrong_ok else 'bad'},good={'ok' if good_ok else 'bad'}"
+
+    got = _readwhen_probe()
+    ok = got == "readwhen-both-ways"
+    bad.append(not ok)
+    print(f"  [{'PASS' if ok else 'FAIL'}] validate selftest: Read-when line "
+          f"presence + core-phrase match, both directions (got {got})")
 
     total = len(bad)
     print(f"selftest: {total - sum(bad)}/{total} green")

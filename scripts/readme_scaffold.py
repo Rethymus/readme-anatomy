@@ -9,7 +9,9 @@ offline gates: anchors are computed with the doctor's own slug function,
 badges are <= 4 and flat-square, the name appears in exactly one surface,
 and bilingual output ships a bidirectional switch line plus the
 source-of-truth [!NOTE]. The skeleton is a questionnaire, not a finished
-document -- every <placeholder> is a claim awaiting its tier.
+document -- every <placeholder> is a claim awaiting its tier, and evidence
+rows ship with Status `not-run` until their Where check has actually run
+(references/claims-posture.md, evidence status vocabulary).
 
 Usage
   python scripts/readme_scaffold.py --name my-tool --type cli-tool --lang both --out-dir .
@@ -140,9 +142,9 @@ Install {name} for me: <raw URL to INSTALL.md, tag-pinned — see references/ins
 
 ## 7. Evidence
 
-| Claim | Where | Notes |
-|---|---|---|
-| <number with conditions> | `<repo path or command>` | platform, sample size, run date |
+| Claim | Where | Status | Notes |
+|---|---|---|---|
+| <number with conditions> | `<repo path or command>` | `not-run` | platform, sample size, run date |
 
 External corroboration is a separate row; a citation is not a measurement.
 
@@ -228,9 +230,9 @@ Install {name} for me: <指向 INSTALL.md 的 raw URL，锁定 tag>
 
 ## 7. 证据
 
-| 主张 | 在哪 | 备注 |
-|---|---|---|
-| <带条件的数字> | `<仓库路径或命令>` | 平台、样本量、日期 |
+| 主张 | 在哪 | 状态 | 备注 |
+|---|---|---|---|
+| <带条件的数字> | `<仓库路径或命令>` | `not-run` | 平台、样本量、日期 |
 
 ## 8. 常见问题
 

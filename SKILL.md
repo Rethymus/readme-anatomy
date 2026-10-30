@@ -62,7 +62,20 @@ pass, or the request clearly exceeds the narrow scope — and state the
 escalation reason in the report. Still torn between small-edit and rewrite?
 The named test: would this change any sentence's claim tier? If yes, it is a
 rewrite. Numeric backstop: an edit touching more than 3 sections is a
-rewrite.
+rewrite. Maintenance edits fix facts, not style: a factual repair does not
+ride along with reformatting, tone changes, or section reordering — an edit
+that reaches rewrite scale escalates by the named test above.
+
+**audit-only, one step further.** The gates read the README; they cannot see
+that the repo grew a capability the README never mentions, or that the README
+still calls "planned" something that already shipped. When the audited repo's
+own files are readable, add a bidirectional capability-drift sweep on top of
+the gate output: the false-positive direction (documented as upcoming, already
+released) and the false-negative direction (a major released capability absent
+from the document). Every such finding binds the repository file path that
+proves it — the same evidence-bound discipline as every other finding — and
+the report states three counts: objects scanned, findings, suggested changes.
+The sweep advises; audit-only still edits nothing.
 
 ## Step 1 — Read references on demand (budget: ≤ 3 per task)
 
@@ -96,8 +109,10 @@ verified claims get an evidence path, development-archive claims get downgraded
 wording in code font with a note, marketing phrasing gets deleted. Use
 admonitions by their semantics (`[!IMPORTANT]` = boundaries and
 necessary/sufficient declarations, `[!WARNING]` = never-do + channel
-exclusivity, `[!NOTE]` = translation drift policy). Build the evidence table.
-Full wording patterns and worked examples: `references/claims-posture.md`.
+exclusivity, `[!NOTE]` = translation drift policy). Build the evidence table —
+every tier-verified claim gets a row whose Status cell comes from the closed
+vocabulary in `references/claims-posture.md`. Full wording patterns and worked
+examples: `references/claims-posture.md`.
 
 ## Step 4 — Bilingual policy (only if Q4 = bilingual)
 
@@ -156,9 +171,11 @@ Seven gates:
    offline, alive under `--live` (GET, not HEAD)
 3. **spelling** — exactly one surface form of the project name
 4. **badges** — ≤ 4 badges, every badge links somewhere meaningful, shields.io
-   badges use `flat-square`
+   badges use `flat-square`; a same-repo dynamic/json badge must resolve to a
+   data file on disk (badge numbers are claims with a Where)
 5. **bilingual** — switch line bidirectional, zero stale cross-language refs,
-   evidence tables in parity across languages (row counts + anchor sets)
+   evidence tables in parity across languages (row counts + anchor sets),
+   heading-level sequences in parity
 6. **admonitions** — canonical `[!TYPE]` set, correct casing, no overuse
 7. **surfaces** — cross-surface consistency: the one-liner's repo must match
    the git remote (impostor detection), its pin must not be stale, it must
@@ -196,6 +213,9 @@ tier upgrade without the evidence path to back it.
   and the date it ran.
 - A citation is not a measurement. "Benchmarked in paper X" is tier
   development-archive until the benchmark runs against *this* project.
+- A negative claim is a claim too. "Does not do X" is only as strong as the
+  "does Y instead" boundary it names and the checkability of its
+  counter-example; a blanket denial reads as marketing wearing modesty.
 - The install one-liner must not depend on local paths. If it only works on
   the author's machine, it is not an install line.
 - Marketing filler is a bug, not a style. Delete "blazingly fast", "used by

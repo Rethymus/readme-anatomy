@@ -6,7 +6,7 @@
 *把 README 写作变成一门测量学科的项目 skill——结构、主张分级、机器门禁。*
 
 > [!NOTE]
-> 英文 `README.md` 是 source of truth。本翻译可能滞后；冲突时以英文版为准。最后同步：2026-10-29。
+> 英文 `README.md` 是 source of truth。本翻译可能滞后；冲突时以英文版为准。最后同步：2026-10-30。
 
 agent 能否证明一份 README 说的是真话，而不只是把它写得看起来可信？
 
@@ -74,7 +74,9 @@ python scripts/readme_doctor.py --selftest   # 预期：全绿
 - 把每条主张归入三个层级，并给出各层级的措辞范式。
 - 用七项离线机器门禁校验 README（仅标准库 Python）；解析引用式链接与
   setext 标题；可选 `--live` 用 GET 探活；`--json` 输出机读报告供 CI 与
-  agent 循环使用；坏锚点附带最近 slug 建议；双语证据表做行集与锚集比对、跨表面一致性检查（安装
+  agent 循环使用；坏锚点附带最近 slug 建议；指向本仓库的 dynamic/json 徽章
+  数字必须能解析到磁盘上的数据文件；双语证据表做行集、锚集与标题层级序列
+  比对、跨表面一致性检查（安装
   一句话的仓库归属与 pin 对照 git remote 与最新 tag、SKILL.md 与包
   版本对照 tag）。`--fix` 原地修复机械缺陷类——含按当前标题再生过期目录
   （幂等：一致的目录字节不变）。`--dry-run` 以 unified diff 预览同一修复集而不落盘。
@@ -86,7 +88,9 @@ python scripts/readme_doctor.py --selftest   # 预期：全绿
   JSON-RPC 2.0、零 SDK 依赖），偏好原生工具调用的宿主无需绕行 shell。
 - 以 READU 方式核查证据表（`scripts/claims_probe.py`）：每格“在哪”的
   路径存在、锚点可达、行号在界、命令在 PATH；`--run` 实际执行、查退出码，
-  并把记录的输出口径（`命令 -> `期望文本``）与真实 stdout 比对。它认证的是
+  并把记录的输出口径（`命令 -> `期望文本``）与真实 stdout 比对；Status 格
+  标为 source-only/not-run 的行以 WARN 级 advisory 返回，正文同样接受营销
+  措辞清扫。它认证的是
   锚点可达，不是主张为真。
 - 转义感知地检查 GFM 表格完整性（`scripts/table_doctor.py`）：单元格内的
   转义管道符（`\|`）仍是一格而不切分行，且每个分隔行/数据行的列数必须与
@@ -111,26 +115,27 @@ python scripts/readme_doctor.py --selftest   # 预期：全绿
 > 门禁全绿是必要条件，不是充分条件。doctor 认证的是"可检查性"，不是
 > 真实性；主张层级由 agent 提议、由作者签字确认。
 
-- 不生成营销文案式的"可信外观"——那是本 skill 要对抗的反模式。
+- 不生成营销文案式的"可信外观"——那是本 skill 要对抗的反模式；取而代之的
+  是主张分级，并删除不可验证的措辞。
 - 不做全自动翻译——只管约定与漂移策略。
 - 不复制第三方模板内容——锚点只引用，永不搬运。
 
 ## 7. 证据
 
-| 主张 | 在哪 | 备注 |
-|---|---|---|
-| 七门禁自测全绿 | `python scripts/readme_doctor.py --selftest` -> `48/48 green` | 数量即主张：增删 fixture 不同步更新此行，CI 变红 |
-| MCP 表面全绿 | `python scripts/mcp_server.py --selftest` -> `12/12 green` | 子进程握手、工具往返、协议守卫 |
-| 规范校验全绿 | `python scripts/validate_skill.py --selftest` -> `11/11 green` | agentskills.io frontmatter + 行数预算 |
-| 证据探针全绿 | `python scripts/claims_probe.py --selftest` -> `20/20 green` | 双锚点 fixture |
-| 表格完整性全绿 | `python scripts/table_doctor.py --selftest` -> `18/18 green` | 转义感知的单元格切分；双锚点 fixture |
-| 脚手架产物过门禁 | `python scripts/readme_scaffold.py --selftest` -> `passes the gates by construction` | 双语两文件 |
-| 真实重写前后对（脱敏） | `assets/before.md`、`assets/after.md` | 起源项目重构前快照 vs 重写版；出处见 `evals/ledger.md` |
-| 规则带出处锚点 | `references/research.md` | URL 已于 2026-10-27 验证；2026 数字细节已于 2026-10-28 经 arXiv 摘要（一手）确认；衰变观察哨列出最先腐烂之处 |
-| agent 表面层纪律 | `references/agent-surfaces.md` | AGENTS.md 标准 + 2026 文献（方向性） |
-| 双语自食其果 | `README.md` + `README.zh-CN.md`，gate 5 | 本仓库消费自己的双语门禁 |
-| CI 强制执行 | `.github/workflows/readme-gates.yml` | 每次 push 跑全部自测 + 双语门禁 + claims `--run` |
-| 方法有先行文献 | `references/research.md`（文献表） | Prana 2018；热度实证 2022；Liu 2023（支撑裁剪上下文，不支撑 ≤3 数字）；2026 文献簇 |
+| 主张 | 在哪 | 状态 | 备注 |
+|---|---|---|---|
+| 七门禁自测全绿 | `python scripts/readme_doctor.py --selftest` -> `52/52 green` | `run-passed` | 数量即主张：增删 fixture 不同步更新此行，CI 变红 |
+| MCP 表面全绿 | `python scripts/mcp_server.py --selftest` -> `12/12 green` | `run-passed` | 子进程握手、工具往返、协议守卫 |
+| 规范校验全绿 | `python scripts/validate_skill.py --selftest` -> `13/13 green` | `run-passed` | agentskills.io frontmatter + 行数预算 + 路由表与 references 一致性 |
+| 证据探针全绿 | `python scripts/claims_probe.py --selftest` -> `22/22 green` | `run-passed` | 双锚点 fixture |
+| 表格完整性全绿 | `python scripts/table_doctor.py --selftest` -> `18/18 green` | `run-passed` | 转义感知的单元格切分；双锚点 fixture |
+| 脚手架产物过门禁 | `python scripts/readme_scaffold.py --selftest` -> `passes the gates by construction` | `run-passed` | 双语两文件 |
+| 真实重写前后对（脱敏） | `assets/before.md`、`assets/after.md` | `run-passed` | 起源项目重构前快照 vs 重写版；出处见 `evals/ledger.md` |
+| 规则带出处锚点 | `references/research.md` | `run-passed` | URL 已于 2026-10-27 验证；2026 数字细节已于 2026-10-28 经 arXiv 摘要（一手）确认；agent 基础设施先例链接已于 2026-10-30 验证；衰变观察哨列出最先腐烂之处 |
+| agent 表面层纪律 | `references/agent-surfaces.md` | `run-passed` | AGENTS.md 标准 + 2026 文献（方向性） |
+| 双语自食其果 | `README.md` + `README.zh-CN.md`，gate 5 | `run-passed` | 本仓库消费自己的双语门禁 |
+| CI 强制执行 | `.github/workflows/readme-gates.yml` | `run-passed` | 每次 push 跑全部自测 + 双语门禁 + claims `--run` |
+| 方法有先行文献 | `references/research.md`（文献表） | `run-passed` | Prana 2018；热度实证 2022；Liu 2023（支撑裁剪上下文，不支撑 ≤3 数字）；2026 文献簇 |
 
 ## 8. 常见问题
 

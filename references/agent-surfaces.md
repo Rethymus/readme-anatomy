@@ -1,5 +1,8 @@
 # Agent surfaces — README, AGENTS.md, and llms.txt (L2)
 
+Read when: the repo also carries AGENTS.md or llms.txt, or the user asks what
+agents read (routed from SKILL.md Step 1).
+
 A repository now speaks to two audiences through different files. Confusing
 them is how both documents rot: the README grows agent plumbing nobody reads,
 and the agent file grows prose nobody's agent obeys.
@@ -40,11 +43,28 @@ and the agent file grows prose nobody's agent obeys.
    the directory tree; subpackage overrides are legitimate, root duplication
    is not. A README at the root that contradicts a package's AGENTS.md is a
    drift bug — gate 3's spelling discipline applies to all surfaces.
+6. **Confusable surfaces disambiguate by path, not by wording.** When a repo
+   carries several near-named surfaces (`README.md` / `README.zh-CN.md` /
+   `INSTALL.md` / `AGENTS.md` / `llms.txt`), a rule about "the install doc"
+   or "the agent file" is ambiguous until it names the real file path.
+   Surface-affecting changes are matched by path, and rules that govern one
+   surface name it — "`AGENTS.md` (repo root)" — instead of a synonym the
+   next reader must guess at. Rule 1 keeps the paths from multiplying; this
+   rule keeps the names from blurring.
+7. **Review strength follows the change object.** Not every edit earns the
+   same scrutiny; decide by what changed, not by how small the diff looks:
+
+   | Changed object | Review strength | What must hold |
+   |---|---|---|
+   | The install one-liner | strict | gate 7 re-run; pin vs latest tag and origin vs git remote checked line by line; both language files agree |
+   | README body prose | regular | all seven gates on the touched file and its translation pair |
+   | A rule in `references/*.md` | justified | say why the rule changes; sync the SKILL.md Step 1 routing row and any `research.md` anchor the rule cited |
 
 ## What this skill gates (and doesn't)
 
-Gate 5 covers bilingual cross-references; these surfaces add no new gate in
-v0.2 — cross-surface consistency (version strings, install commands repeated
-across README/AGENTS.md) is a planned M4 check. For now, when writing or
-auditing any surface, run the same gates on it: it is markdown with links and
-a project name, and every rule here applies verbatim.
+Gate 5 covers bilingual cross-references; gate 7 covers cross-surface
+consistency (the one-liner's origin and pin against the git remote and the
+latest tag, SKILL.md and package versions against the tag). These surfaces
+add no gate of their own: when writing or auditing any surface, run the same
+gates on it — it is markdown with links and a project name, and every rule
+here applies verbatim.

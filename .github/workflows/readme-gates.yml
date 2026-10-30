@@ -22,7 +22,7 @@ jobs:
           python scripts/table_doctor.py evals/ledger.md
           python scripts/table_doctor.py README.md
           python scripts/table_doctor.py README.zh-CN.md
-      - name: skill spec validation (agentskills.io frontmatter + body budget)
+      - name: skill spec validation (frontmatter + body budget + routing-table/references consistency)
         run: |
           python scripts/validate_skill.py --selftest
           python scripts/validate_skill.py .

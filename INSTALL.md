@@ -2,7 +2,7 @@
 
 readme-anatomy is an [Agent Skill](https://agentskills.io/specification): a
 directory whose `SKILL.md` teaches your coding agent a measurement-first
-README method — anatomy, tiered claims, bilingual drift policy — with six
+README method — anatomy, tiered claims, bilingual drift policy — with seven
 machine gates in `scripts/`.
 
 ## Prerequisites
@@ -16,7 +16,7 @@ machine gates in `scripts/`.
 ```bash
 git clone https://github.com/Rethymus/readme-anatomy.git
 cd readme-anatomy
-python scripts/readme_doctor.py --selftest   # expect: selftest 48/48 green
+python scripts/readme_doctor.py --selftest   # expect: selftest 52/52 green
 ```
 
 ## Install into an agent host
@@ -32,7 +32,7 @@ Then verify the copy in place:
 
 ```bash
 python <skills-dir>/readme-anatomy/scripts/readme_doctor.py --selftest
-# expect: selftest 48/48 green
+# expect: selftest 52/52 green
 ```
 
 File-copy success does **not** prove your host discovers the skill — run one

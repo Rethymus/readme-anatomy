@@ -1,5 +1,8 @@
 # Claims & posture — the semantic contract layer (L2)
 
+Read when: always, before finalizing any claim, badge, or admonition (routed
+from SKILL.md Step 1).
+
 A README is a contract offered to strangers. This file defines how strongly
 each sentence is allowed to assert, and which visual device carries which
 semantic load.
@@ -23,6 +26,13 @@ Rules:
   or the contrast table. The top of the document is verified-only territory.
 - Numbers beat adjectives, ranges beat points, and a number with a reproducible
   path beats both ("41±3 ms, `scripts/bench.py`" not "fast").
+- Negative claims sit under the same tier governance as positive ones. The
+  credibility of "not X" is a property of how specific the boundary is and how
+  checkable its counter-example is; a blanket denial ("not a toy, a real tool")
+  has no referent and is marketing whatever its tone. Capability-limitation
+  statements (partial support / client-side only / unsupported) use a
+  controlled vocabulary and carry the upstream evidence path (issue, doc page,
+  forum thread) under the same Where discipline as any number.
 
 ## How to place a claim
 
@@ -87,10 +97,10 @@ One device, one job. Mixing them is how docs start lying:
 Every tier-verified claim gets a row; the table lives in the Evidence section
 (template: `templates/evidence-table.md`):
 
-| Claim | Where | Notes |
-|---|---|---|
-| Renders 30k-row table in 41±3 ms | `scripts/bench.py`, run logged in `docs/bench-2026-10.md` | Chrome 139, M2, median of 50 |
-| No runtime dependencies | `package.json` `dependencies: {}` | verified at v2.3.0 |
+| Claim | Where | Status | Notes |
+|---|---|---|---|
+| Renders 30k-row table in 41±3 ms | `scripts/bench.py`, run logged in `docs/bench-2026-10.md` | `run-passed` | Chrome 139, M2, median of 50 |
+| No runtime dependencies | `package.json` `dependencies: {}` | `run-passed` | verified at v2.3.0 |
 
 - "Where" is a path or a command, never a URL alone — a URL is a citation,
   and **a citation is not a measurement**.
@@ -104,6 +114,54 @@ Every tier-verified claim gets a row; the table lives in the Evidence section
   negative row is written before its check has actually been executed — the
   "No runtime dependencies" row above earns its place by pointing at the
   manifest, not at confidence.
+
+### The Status column — a closed vocabulary
+
+Anchor resolvability is not claim truth. The table therefore carries a Status
+column drawn from a closed five-value vocabulary, so "the check actually ran"
+and "this names a sensible verification step" can never blur into each other:
+
+| Status | Earned when |
+|---|---|
+| `run-passed` | the check the Where cell names was executed — here or in CI — and returned the recorded result |
+| `run-failed` | the check ran and disagreed with the claim; the row is pending repair or removal |
+| `blocked` | the check cannot run in this environment; the blocker is named |
+| `not-run` | the check is proposed but has not been executed yet |
+| `source-only` | the Where cell names where proof would live, but nothing has verified it |
+
+Rules: a row earns a `run-*` status only when its Where check actually ran and
+produced a result; anything short of that is `not-run` or `source-only`. A
+`source-only` or `not-run` row cannot back a verified-tier claim — until its
+check runs, the claim it supports belongs in development-archive wording or on
+the task list. The claims probe reports such rows as WARN-class advisory
+findings for exactly this reason: an anchor that resolves is a location, not a
+verdict.
+
+### Independence grading for external corroboration
+
+Corroboration rows (papers, third-party benchmarks) carry an Independence
+column with three graded values, and every row states its grade and the date
+it was recorded:
+
+- **author-reported** — the claim's own author measured it;
+- **independently reproduced** — a third party re-ran it and published the
+  result;
+- **reader-rerunnable** — the reader can rerun it in place: the command and
+  the data ship with the claim.
+
+The grade is recorded, never implied — a reader deciding how far to trust a
+row should not have to guess who ran it.
+
+### Scale numbers on badges — the evidence shape
+
+A number printed on a badge is a claim like any other. Its Where is the data
+file that generates it plus the mechanism that regenerates it (a scheduled job
+or a change-triggered script) — never the badge image, and never a hand-typed
+or screenshotted figure. Gate 4 enforces the mechanical half for shields
+dynamic/json badges aimed back at the badge's own repo: the encoded target
+must resolve to an on-disk file holding valid JSON. A badge number with no
+regenerating data file behind it is marketing-tier material in a verified
+costume — wire it up or word it down.
 
 ## Author sign-off
 

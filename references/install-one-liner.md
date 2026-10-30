@@ -1,5 +1,8 @@
 # The agent-fetchable install one-liner (L2)
 
+Read when: writing the install section of anything installable (routed from
+SKILL.md Step 1).
+
 The install section's first line is written for two readers at once: a human
 who pastes it into a chat, and an agent that must act on it without any local
 context. Both need the same property: the line carries everything, depends on

@@ -45,6 +45,13 @@ lexical hit says "look here", not "this is false"; deciding mention-vs-use
 (quoted examples fire too) stays with the author. Sweep findings never touch
 the exit code, the ref counters, or any gate outcome.
 
+The evidence-status sweep (sweep_evidence_status) is a third, by the same
+precedent: the evidence table exists only for tier-verified claims, so a row
+whose Status cell says source-only / not-run contradicts its own placement --
+the check its Where names has not run. The probe certifies anchorability, not
+truth, so this stays advisory too: findings say "look here"; deciding
+run-it-vs-move-it stays with the author.
+
 Usage
   python scripts/claims_probe.py README.md [--run] [--json]
   python scripts/claims_probe.py --selftest
@@ -97,6 +104,56 @@ MARKETING_PHRASES = (
     "used by thousands",
 )
 MARKETING_TIER_REF = "references/claims-posture.md (marketing tier)"
+
+# --------------------------------------- evidence-status advisory sweep ----
+# references/claims-posture.md, evidence status vocabulary: a closed
+# five-value set where a row earns run-passed/run-failed only when its Where
+# check actually ran. The table exists ONLY for tier-verified claims, so a
+# row whose Status cell is source-only / not-run is a placement
+# contradiction. Advisory by the sweep_marketing precedent: never touches
+# exit codes, ref counters, or gate outcomes. Known non-fire class: tables
+# without a Status column (backwards compatible by construction).
+UNVERIFIED_STATUSES = ("source-only", "not-run")
+STATUS_VOCAB_REF = "references/claims-posture.md (evidence status vocabulary)"
+
+
+def sweep_evidence_status(text: str) -> list[tuple[int, str]]:
+    """Advisory sweep of the Evidence section for rows whose Status cell is
+    source-only / not-run. Fires only when the table's header row carries a
+    Status (状态) column alongside a claim-ish cell, so three-column tables
+    are unaffected. Returns [(line_no, detail), ...]; probe() carries these
+    as WARN-class advisory findings in report["status"]. A hit flags a row
+    for human judgment -- it fails nothing."""
+    hits: list[tuple[int, str]] = []
+    lines = strip_code_fences(text).splitlines()
+    in_section = False
+    status_col: int | None = None
+    for i, line in enumerate(lines, start=1):
+        if NEXT_SECTION_RE.match(line):
+            in_section = bool(EVIDENCE_SECTION_RE.match(line))
+            status_col = None
+            continue
+        if not in_section or not TABLE_ROW_RE.match(line):
+            continue
+        if SEPARATOR_RE.match(line):
+            continue
+        cells = [c.strip() for c in TABLE_SPLIT_RE.sub("", line).split("|")]
+        low = [c.lower() for c in cells]
+        if status_col is None:
+            claimish = any(k in c for c in low for k in ("claim", "主张", "where", "在哪"))
+            statusish = "status" in low or "状态" in low
+            if claimish and statusish:
+                status_col = low.index("status") if "status" in low else low.index("状态")
+            continue
+        if len(cells) <= status_col:
+            continue
+        val = cells[status_col].strip("`* ").lower()
+        if val in UNVERIFIED_STATUSES:
+            hits.append((i, f"row status is '{val}' -- source-only/not-run rows "
+                            f"cannot back a tier-verified claim: run the Where "
+                            f"check, or move the row out of the table "
+                            f"({STATUS_VOCAB_REF})"))
+    return hits
 
 
 def sweep_marketing(text: str) -> list[tuple[int, str]]:
@@ -273,12 +330,14 @@ def probe(readme: Path, *, run: bool = False) -> dict:
     """Programmatic entry (CLI and MCP share this): returns a report dict."""
     text = readme.read_text(encoding="utf-8")
     rows = parse_evidence_rows(text)
-    # marketing sweep is advisory: report["marketing"] is additive and is
-    # never folded into failed/warned -- exit codes and gate outcomes are
-    # untouched by construction (heuristic semantic layer, see module docs)
+    # marketing and evidence-status sweeps are advisory: report["marketing"]
+    # and report["status"] are additive and are never folded into
+    # failed/warned -- exit codes and gate outcomes are untouched by
+    # construction (heuristic semantic layer, see module docs)
     report = {"file": str(readme), "run": bool(run), "rows": [],
               "failed": 0, "warned": 0, "checked": 0,
-              "marketing": sweep_marketing(text)}
+              "marketing": sweep_marketing(text),
+              "status": sweep_evidence_status(text)}
     if not rows:
         report["summary"] = "SKIP (no evidence table found)"
         return report
@@ -439,6 +498,29 @@ def selftest() -> int:
               len(rep["marketing"]) == 1 and rep["failed"] == 0 and rep["warned"] == 0,
               str(rep["marketing"]))
 
+        # evidence-status sweep -- advisory like the marketing sweep: rows
+        # whose Status cell says source-only/not-run sit in a verified-only
+        # table; dual anchors per the claims-posture status vocabulary
+        def _status_table(row_status: str) -> str:
+            return ("# t\n\n## Evidence\n\n| Claim | Where | Status | Notes |\n"
+                    "|---|---|---|---|\n"
+                    f"| c | `scripts/bench.py` | {row_status} | n |\n")
+
+        readme.write_text(_status_table("source-only"), encoding="utf-8")
+        rep = probe(readme)
+        check("must-fire: source-only status row advisories (cites the vocabulary)",
+              len(rep["status"]) == 1 and "source-only" in rep["status"][0][1]
+              and rep["failed"] == 0 and rep["warned"] == 0, str(rep["status"]))
+        readme.write_text(_status_table("`run-passed`"), encoding="utf-8")
+        rep = probe(readme)
+        readme.write_text("# t\n\n## Evidence\n\n| Claim | Where | Notes |\n"
+                          "|---|---|---|\n| c | `scripts/bench.py` | n |\n",
+                          encoding="utf-8")
+        rep3 = probe(readme)
+        check("must-not-fire: run-passed rows and Status-less tables stay silent",
+              rep["status"] == [] and rep3["status"] == [],
+              str((rep["status"], rep3["status"])))
+
     total = ran  # derived from the checks actually run -- a hand-maintained
                  # total had drifted from birth (v0.7.0 shipped 16 over 15
                  # fixtures; v0.8.0 preserved the offset at 17 over 16)
@@ -477,6 +559,12 @@ def main(argv=None) -> int:
         print(f"  marketing sweep: {len(marketing)} hit(s) -- WARN-class advisory "
               f"only, gates untouched ({MARKETING_TIER_REF})")
         for line_no, detail in marketing:
+            print(f"      WARN l{line_no:<4} {detail}")
+    status_hits = report.get("status") or []
+    if status_hits:
+        print(f"  status sweep: {len(status_hits)} hit(s) -- WARN-class advisory "
+              f"only, gates untouched ({STATUS_VOCAB_REF})")
+        for line_no, detail in status_hits:
             print(f"      WARN l{line_no:<4} {detail}")
     if args.json:
         print(json.dumps(report, ensure_ascii=False, indent=2))

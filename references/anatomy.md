@@ -1,5 +1,8 @@
 # Anatomy — the structure layer (L1)
 
+Read when: always, before restructuring or drafting sections (routed from
+SKILL.md Step 1).
+
 Every rule here carries an anchor (ledger in `research.md`). Anchors are
 acknowledgements, not dependencies: if the source dies, the rule stands and the
 ledger entry gets a replacement.
@@ -43,11 +46,13 @@ document position.
 5. **How it works** — the mechanism in ≥ 1 diagram or worked example; this is
    the credibility section, so it carries evidence paths.
 6. **Boundaries — what it does not do** — standalone section, `[!IMPORTANT]`
-   opening. Anti-feature lists prevent the wrong adopter and preempt FAQ wars.
+   opening. Anti-feature lists prevent the wrong adopter and preempt FAQ wars;
+   write them by the negative-claim rules below.
 7. **Evidence** — the evidence table (`templates/evidence-table.md`): every
    tier-verified claim with its "where" column.
 8. **FAQ** — standalone; every entry is a real question someone asked or will
-   ask, including the hostile one.
+   ask, including the hostile one — whose answer carries click-through
+   evidence (see Writing negative claims below).
 9. **Contributing** — the smallest honest instruction, not a template wall.
 10. **License** — one line plus link; wording must match the claims tier
     (see the MIT worked example in `claims-posture.md`).
@@ -56,6 +61,25 @@ Section order rationale: problem → proof-of-relevance → action → depth →
 limits → trust — mirrors the cognitive funnel readers actually descend
 (category anchor: Art of README, archived copy noted in `research.md`;
 taxonomy anchor: Prana et al. 2018).
+
+## Writing negative claims (sections 6 and 8)
+
+Boundaries and FAQ are where a project makes verifiable negative statements;
+four rules govern the craft:
+
+- Every "does not do X" binds a "does Y instead" distinction. A bare negation
+  reads as modesty; the contrast is the actual information. A boundary without
+  its Y-half invites the reader to conclude "no capabilities at all" — the
+  mirror-image failure of overclaiming.
+- FAQ answers to hostile or skeptical questions carry countable, clickable
+  public evidence — a number the reader can open (a merged-PR listing, a
+  release page, a benchmark log), not a slogan. Slogans answer nothing and
+  read as evasion.
+- Project-status content uses a three-state marker (shipped / in progress /
+  not started). "Coming soon" is not a state; it is a promise without a Where.
+- Anti-pattern entries can take a four-part shape: the problem, a
+  counter-example, the corrected example, then the rule in one sentence. The
+  rule lands last because the pair before it is what makes it believed.
 
 ## Per-type section emphasis
 
