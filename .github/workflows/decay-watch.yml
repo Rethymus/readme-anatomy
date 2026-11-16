@@ -1,3 +1,7 @@
+# [PAUSED 2026-11-16] GitHub Actions locked (account billing) -- scheduled
+# probes suspended; watchlist items 5/6/8 are unmonitored remotely. Run
+# ledger_probe + table_doctor locally per docs/CI-STATUS.md. Remove this
+# marker on reactivation.
 name: decay-watch
 
 # Weekly automated probe of references/research.md's decay watchlist

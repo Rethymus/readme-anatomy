@@ -1,3 +1,7 @@
+# [PAUSED 2026-11-16] GitHub Actions locked (account billing) -- scheduled
+# probes suspended; watchlist item 2 (ecosystem whitespace) is unmonitored
+# remotely. Run the gh search spot-check locally per docs/CI-STATUS.md.
+# Remove this marker on reactivation.
 name: ecosystem-watch
 
 # Monthly automated probe of research.md's decay-watchlist item 2 (ecosystem

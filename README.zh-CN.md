@@ -10,8 +10,6 @@
 
 agent 能否证明一份 README 说的是真话，而不只是把它写得看起来可信？
 
-[![readme gates](https://github.com/Rethymus/readme-anatomy/actions/workflows/readme-gates.yml/badge.svg?style=flat-square)](https://github.com/Rethymus/readme-anatomy/actions/workflows/readme-gates.yml)
-
 30 秒：[安装](#3-安装) · [对照](#2-30-秒对照) · [能力](#4-能力) · [证据](#7-证据)
 
 [English](README.md) | **简体中文**
@@ -99,7 +97,9 @@ python scripts/readme_doctor.py --selftest   # 预期：全绿
 - 发布自动化同样保持第一方：`v*` tag 推送即由 runner 自带的 `gh` CLI 发布
   GitHub Release（`--generate-notes`；`.github/workflows/release.yml`）——
   第三方 action 永远拿不到 `contents: write` 令牌（setup 指令武器化立场见
-  `references/agent-surfaces.md`）。
+  `references/agent-surfaces.md`）。远端自动化已于 2026-11-16 暂停（GitHub
+  Actions 因账户账单锁定不可用）：暂停期发布改为手动
+  （`gh release create <tag> --generate-notes`），见 `docs/CI-STATUS.md`。
 
 ## 5. 工作原理
 
@@ -134,7 +134,7 @@ python scripts/readme_doctor.py --selftest   # 预期：全绿
 | 规则带出处锚点 | `references/research.md` | `run-passed` | URL 已于 2026-10-27 验证；2026 数字细节已于 2026-10-28 经 arXiv 摘要（一手）确认；agent 基础设施先例链接已于 2026-10-30 验证；衰变观察哨列出最先腐烂之处 |
 | agent 表面层纪律 | `references/agent-surfaces.md` | `run-passed` | AGENTS.md 标准 + 2026 文献（方向性） |
 | 双语自食其果 | `README.md` + `README.zh-CN.md`，gate 5 | `run-passed` | 本仓库消费自己的双语门禁 |
-| CI 强制执行 | `.github/workflows/readme-gates.yml` | `run-passed` | 每次 push 跑全部自测 + 双语门禁 + claims `--run` |
+| 远端 CI —— 已阻断（账单锁定） | `.github/workflows/readme-gates.yml` | `blocked` | workflow 保留但 GitHub Actions 被账户锁定；同一套门禁每次改动在本地逐项执行——见 [docs/CI-STATUS.md](docs/CI-STATUS.md) |
 | 方法有先行文献 | `references/research.md`（文献表） | `run-passed` | Prana 2018；热度实证 2022；Liu 2023（支撑裁剪上下文，不支撑 ≤3 数字）；2026 文献簇 |
 
 ## 8. 常见问题

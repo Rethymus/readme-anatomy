@@ -4,8 +4,6 @@
 
 Can an agent prove a README tells the truth, instead of merely making it look convincing?
 
-[![readme gates](https://github.com/Rethymus/readme-anatomy/actions/workflows/readme-gates.yml/badge.svg?style=flat-square)](https://github.com/Rethymus/readme-anatomy/actions/workflows/readme-gates.yml)
-
 30 seconds: [Install](#3-install) · [Contrast](#2-30-second-contrast) · [Capabilities](#4-capabilities) · [Evidence](#7-evidence)
 
 **English** | [简体中文](README.zh-CN.md)
@@ -104,7 +102,9 @@ copy the `readme-anatomy/` directory into your skills directory. Full details:
   Release via the runner's own `gh` CLI (`--generate-notes`;
   `.github/workflows/release.yml`) — no third-party action is ever granted the
   `contents: write` token (the weaponized-setup stance:
-  `references/agent-surfaces.md`).
+  `references/agent-surfaces.md`). Remote automation is PAUSED 2026-11-16
+  (GitHub Actions account-locked): releases are manual while paused
+  (`gh release create <tag> --generate-notes`) — see `docs/CI-STATUS.md`.
 
 ## 5. How it works
 
@@ -143,7 +143,7 @@ Rules cite anchors; anchors never carry the rules.
 | Rules carry source anchors | `references/research.md` | `run-passed` | URLs verified 2026-10-27; 2026 numeric specifics confirmed 2026-10-28 (arXiv abstracts, first-hand); agent-infrastructure precedent links verified 2026-10-30; decay watchlist ranks what rots first |
 | Agent-surface discipline | `references/agent-surfaces.md` | `run-passed` | AGENTS.md standard + 2026 literature (directional) |
 | Bilingual self-dogfood | `README.md` + `README.zh-CN.md`, gate 5 | `run-passed` | this repo consumes its own bilingual gates |
-| CI enforcement | `.github/workflows/readme-gates.yml` | `run-passed` | selftests + bilingual gates + claims probe `--run` on every push |
+| Remote CI — blocked (billing lock) | `.github/workflows/readme-gates.yml` | `blocked` | workflow intact but GitHub Actions is account-locked; the same gates run locally per change — see [docs/CI-STATUS.md](docs/CI-STATUS.md) |
 | Method grounded in prior art | `references/research.md` (literature tables) | `run-passed` | Prana 2018; README-popularity 2022; Liu 2023 (grounds trimming, not the ≤3 number); 2026 cluster |
 
 ## 8. FAQ
