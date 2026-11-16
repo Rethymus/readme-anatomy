@@ -26,8 +26,11 @@ name: ecosystem-watch
 # an early-warning probe).
 
 on:
-  schedule:
-    - cron: "23 5 3 * *" # monthly, 3rd day, 05:23 UTC
+  # schedule disabled while GitHub Actions is account-locked. Evidence: the
+  # monthly cron fired 11-03 successfully (cadence proven). Restore on
+  # reactivation:
+  #   schedule:
+  #     - cron: "23 5 3 * *" # monthly, 3rd day, 05:23 UTC
   workflow_dispatch: {}
 
 jobs:

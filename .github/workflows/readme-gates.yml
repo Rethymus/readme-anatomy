@@ -1,9 +1,11 @@
-# [PAUSED 2026-11-16] GitHub Actions locked (account billing) -- this workflow
-# will not run. See docs/CI-STATUS.md for the hold notice, local-gate
-# equivalents, and the reactivation checklist. Remove this marker on reactivation.
+# [PAUSED 2026-11-16] GitHub Actions locked (account billing) -- push/pull_request
+# triggers disabled (pushes produce no CI signal while locked; the same gates
+# run locally per docs/CI-STATUS.md). Restore `on: [push, pull_request]` on
+# reactivation; workflow_dispatch stays for post-unlock verification.
 name: readme-gates
 
-on: [push, pull_request]
+on:
+  workflow_dispatch: {}
 
 jobs:
   gates:

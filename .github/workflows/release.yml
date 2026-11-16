@@ -1,6 +1,7 @@
-# [PAUSED 2026-11-16] GitHub Actions locked (account billing) -- this workflow
-# will not run; tag releases must be created manually (gh release create <tag>
-# --generate-notes). See docs/CI-STATUS.md. Remove this marker on reactivation.
+# [PAUSED 2026-11-16] GitHub Actions locked (account billing) -- the tag
+# trigger is disabled; releases must be created manually (gh release create
+# <tag> --generate-notes) or deferred. Restore the tag trigger on
+# reactivation; workflow_dispatch stays for post-unlock verification.
 name: release
 
 # Tag-driven GitHub Releases. First-party tooling only: this job's token has
@@ -10,9 +11,12 @@ name: release
 # commit SHA, and the release step is the gh CLI preinstalled on the runner.
 
 on:
-  push:
-    tags:
-      - "v*"
+  # tag trigger disabled while GitHub Actions is account-locked (releases are
+  # manual while paused). Restore on reactivation:
+  #   push:
+  #     tags:
+  #       - "v*"
+  workflow_dispatch: {}
 
 permissions:
   contents: write

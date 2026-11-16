@@ -13,8 +13,11 @@ name: decay-watch
 # procedural by design.
 
 on:
-  schedule:
-    - cron: "17 4 * * 1" # weekly, Monday 04:17 UTC
+  # schedule disabled while GitHub Actions is account-locked. Evidence: the
+  # cron itself was proven -- 11-02 and 11-03 scheduled runs succeeded, then
+  # 11-09 and 11-16 failed in 3s on the billing lock. Restore on reactivation:
+  #   schedule:
+  #     - cron: "17 4 * * 1" # weekly, Monday 04:17 UTC
   workflow_dispatch: {}
 
 jobs:
